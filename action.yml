@@ -9,6 +9,9 @@ inputs:
       by replacing this token with a user token which has write-access to your repository. 
       Note that the token will be accessible to all repository collaborators.
     default: ${{ github.token }}
+  path:
+    description: An assignment path within the repository.
+    required: false
 runs:
   using: "node12"
   main: "./dist/index.js"
