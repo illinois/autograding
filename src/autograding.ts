@@ -12,6 +12,7 @@ const run = async (): Promise<void> => {
 
     const assignmentPath = core.getInput("path")
     if (assignmentPath) {
+      console.log(`Using assignment path: ${path}`)
       cwd = path.join(cwd, assignmentPath)
     }
 
