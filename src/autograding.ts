@@ -5,12 +5,17 @@ import {Test, runAll} from './runner'
 
 const run = async (): Promise<void> => {
   try {
-    const cwd = process.env['GITHUB_WORKSPACE']
+    let cwd = process.env['GITHUB_WORKSPACE']
     if (!cwd) {
       throw new Error('No GITHUB_WORKSPACE')
     }
 
-    const data = fs.readFileSync(path.resolve(cwd, '.github/classroom/autograding.json'))
+    const assignmentPath = core.getInput("path")
+    if (assignmentPath) {
+      cwd = path.join(cwd, assignmentPath)
+    }
+
+    const data = fs.readFileSync(path.resolve(cwd, assignmentPath, '.github/classroom/autograding.json'))
     const json = JSON.parse(data.toString())
 
     await runAll(json.tests as Array<Test>, cwd)
