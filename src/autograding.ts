@@ -10,13 +10,18 @@ const run = async (): Promise<void> => {
       throw new Error('No GITHUB_WORKSPACE')
     }
 
-    const assignmentPath = core.getInput("path")
+    const assignmentPath = core.getInput('path')
     if (assignmentPath) {
       console.log(`Using assignment path: ${assignmentPath}`)
       cwd = path.join(cwd, assignmentPath)
     }
 
-    const data = fs.readFileSync(path.resolve(cwd, '.github/classroom/autograding.json'))
+    let testSuite = core.getInput('test_suite')
+    if (!testSuite) {
+      testSuite = 'autograding'
+    }
+
+    const data = fs.readFileSync(path.resolve(cwd, '.github/classroom/${testSuite}.json'))
     const json = JSON.parse(data.toString())
 
     await runAll(json.tests as Array<Test>, cwd)
