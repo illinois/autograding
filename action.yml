@@ -12,6 +12,9 @@ inputs:
   path:
     description: An assignment path within the repository.
     required: false
+  test_suite:
+    description: A test_suite name within the repository.
+    default: 'autograding'
 runs:
   using: "node12"
   main: "./dist/index.js"
