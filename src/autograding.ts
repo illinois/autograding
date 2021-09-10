@@ -21,7 +21,7 @@ const run = async (): Promise<void> => {
       testSuite = 'autograding'
     }
 
-    const data = fs.readFileSync(path.resolve(cwd, '.github/classroom/${testSuite}.json'))
+    const data = fs.readFileSync(path.resolve(cwd, `.github/classroom/${testSuite}.json`))
     const json = JSON.parse(data.toString())
 
     await runAll(json.tests as Array<Test>, cwd)
