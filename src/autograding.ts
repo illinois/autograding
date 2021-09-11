@@ -24,7 +24,7 @@ const run = async (): Promise<void> => {
     const data = fs.readFileSync(path.resolve(cwd, `.github/classroom/${testSuite}.json`))
     const json = JSON.parse(data.toString())
 
-    await runAll(json.tests as Array<Test>, cwd)
+    await runAll(json.tests as Array<Test>, cwd, testSuite)
   } catch (error) {
     // If there is any error we'll fail the action with the error message
     console.error(error.message)

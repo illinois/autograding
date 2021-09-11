@@ -2,9 +2,10 @@ import {spawn, ChildProcess} from 'child_process'
 import kill from 'tree-kill'
 import {v4 as uuidv4} from 'uuid'
 import * as core from '@actions/core'
-import {setCheckRunOutput} from './output'
+import {setCheckRunOutput, writeResultJSONFile} from './output'
 import * as os from 'os'
 import chalk from 'chalk'
+import { fstat } from 'fs'
 
 const color = new chalk.Instance({level: 1})
 
@@ -196,7 +197,7 @@ export const run = async (test: Test, cwd: string): Promise<void> => {
   await runCommand(test, cwd, timeout)
 }
 
-export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => {
+export const runAll = async (tests: Array<Test>, cwd: string, testSuite: string): Promise<void> => {
   let points = 0
   let availablePoints = 0
   let hasPoints = false
@@ -251,6 +252,16 @@ export const runAll = async (tests: Array<Test>, cwd: string): Promise<void> => 
     const text = `Points ${points}/${availablePoints}`
     log(color.bold.bgCyan.black(text))
     core.setOutput('Points', `${points}/${availablePoints}`)
+
     await setCheckRunOutput(text)
   }
+
+  await writeResultJSONFile(
+    {
+      points: hasPoints ? points : failed ? 0 : 1,
+      availablePoints: hasPoints ? availablePoints : 1,
+      testSuite: testSuite,
+    },
+    cwd,
+  )
 }

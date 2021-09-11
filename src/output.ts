@@ -1,5 +1,14 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import fs from 'fs'
+import path from 'path'
+
+export const writeResultJSONFile = async (
+  json: {points: number; availablePoints: number; testSuite: string},
+  cwd: string,
+): Promise<void> => {
+  fs.writeFileSync(path.join(cwd, json.testSuite + '.json'), JSON.stringify(json))
+}
 
 export const setCheckRunOutput = async (text: string): Promise<void> => {
   // If we have nothing to output, then bail
