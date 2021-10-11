@@ -70,8 +70,8 @@ const waitForExit = async (child: ChildProcess, timeout: number): Promise<void> 
 
     const exitTimeout = setTimeout(() => {
       timedOut = true
-      reject(new TestTimeoutError(`Setup timed out in ${timeout} milliseconds`))
       kill(child.pid)
+      reject(new TestTimeoutError(`Setup timed out in ${timeout} milliseconds`))
     }, timeout)
 
     child.once('exit', (code: number, signal: string) => {
@@ -102,6 +102,7 @@ const runSetup = async (test: Test, cwd: string, timeout: number): Promise<void>
   const setup = spawn(test.setup, {
     cwd,
     shell: true,
+    timeout: timeout + 1000,
     env: {
       PATH: process.env['PATH'],
       FORCE_COLOR: 'true',
@@ -128,6 +129,7 @@ const runCommand = async (test: Test, cwd: string, timeout: number): Promise<voi
   const child = spawn(test.run, {
     cwd,
     shell: true,
+    timeout: timeout + 1000,
     env: {
       PATH: process.env['PATH'],
       FORCE_COLOR: 'true',
