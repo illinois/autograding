@@ -11314,6 +11314,7 @@ const waitForExit = async (child, timeout) => {
     // eslint-disable-next-line no-undef
     return new Promise((resolve, reject) => {
         let timedOut = false;
+        log(`Waiting for ${child.pid} to complete (timeout=${timeout}).`);
         const exitTimeout = setTimeout(() => {
             timedOut = true;
             tree_kill_1.default(child.pid);

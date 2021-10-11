@@ -67,6 +67,7 @@ const waitForExit = async (child: ChildProcess, timeout: number): Promise<void> 
   // eslint-disable-next-line no-undef
   return new Promise((resolve, reject) => {
     let timedOut = false
+    log(`Waiting for ${child.pid} to complete (timeout=${timeout}).`)
 
     const exitTimeout = setTimeout(() => {
       timedOut = true
