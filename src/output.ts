@@ -1,13 +1,24 @@
+import * as artifact from '@actions/artifact'
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import fs from 'fs'
 import path from 'path'
 
+const artifactClient = artifact.create()
+const artifactName = 'grading-results'
+const options = {
+  continueOnError: false,
+}
+
 export const writeResultJSONFile = async (
-  json: {points: number; availablePoints: number; testSuite: string},
+  json: {points: number; availablePoints: number; testSuite: string; log: any},
   cwd: string,
 ): Promise<void> => {
-  fs.writeFileSync(path.join(cwd, json.testSuite + '.json'), JSON.stringify(json))
+  const filepath = path.join(cwd, json.testSuite + '.json')
+  fs.writeFileSync(filepath, JSON.stringify(json))
+
+  // Upload the json file as artifact
+  await artifactClient.uploadArtifact(artifactName, [filepath], cwd, options)
 }
 
 export const setCheckRunOutput = async (text: string): Promise<void> => {
