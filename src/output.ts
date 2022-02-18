@@ -11,7 +11,7 @@ const options = {
 }
 
 export const writeResultJSONFile = async (
-  json: {points: number; availablePoints: number; testSuite: string},
+  json: {points: number; availablePoints: number; testSuite: string; log: any},
   cwd: string,
 ): Promise<void> => {
   const filepath = path.join(cwd, json.testSuite + '.json')

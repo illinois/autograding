@@ -203,6 +203,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
   let points = 0
   let availablePoints = 0
   let hasPoints = false
+  let jsonScoreLog = []
 
   // https://help.github.com/en/actions/reference/development-tools-for-github-actions#stop-and-start-log-commands-stop-commands
   const token = uuidv4()
@@ -213,6 +214,12 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
   let failed = false
 
   for (const test of tests) {
+    let scoreLog = {
+      test: test.name,
+      success: false,
+      points: 0,
+    }
+
     try {
       if (test.points) {
         hasPoints = true
@@ -226,13 +233,17 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
       log(``)
       if (test.points) {
         points += test.points
+        scoreLog.points = test.points
       }
+      scoreLog.success = true
     } catch (error) {
       failed = true
       log('')
       log(color.red(`❌ ${test.name}`))
       core.setFailed(error.message)
     }
+
+    jsonScoreLog.push(scoreLog)
   }
 
   // Restart command processing
@@ -263,6 +274,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
       points: hasPoints ? points : failed ? 0 : 1,
       availablePoints: hasPoints ? availablePoints : 1,
       testSuite: testSuite,
+      log: jsonScoreLog,
     },
     cwd,
   )
