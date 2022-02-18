@@ -218,6 +218,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
       test: test.name,
       success: false,
       points: 0,
+      availablePoints: test.points,
     }
 
     try {

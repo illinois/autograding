@@ -18024,6 +18024,7 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
             test: test.name,
             success: false,
             points: 0,
+            availablePoints: test.points,
         };
         try {
             if (test.points) {
