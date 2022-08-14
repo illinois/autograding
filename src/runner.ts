@@ -272,7 +272,14 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
   }
 
   log(summaryTable.toString())
-  core.summary.addTable(summaryTable).write()
+
+  if (step_summary) {
+    core.summary
+    .addTable(summaryTable)
+    .addRaw(`Total points: ${points}/${availablePoints}`)
+    .write()
+  }
+
   log('got here')
 
   // Set the number of points

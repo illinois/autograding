@@ -17,7 +17,6 @@ inputs:
     default: 'autograding'
   step_summary: 
     description: Boolean describing if a step summary should be generated
-    required: false
     default: false
 runs:
   using: "node12"
