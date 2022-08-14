@@ -38514,7 +38514,7 @@ const run = async () => {
     }
     catch (error) {
         // If there is any error we'll fail the action with the error message
-        console.error(error.stack);
+        console.error(error.message);
         core.setFailed(`Autograding failure: ${error}`);
     }
 };
@@ -38899,14 +38899,13 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
         log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨');
         log('');
     }
-    log(summaryTable.toString());
     if (step_summary) {
         core.summary
+            .addHeading('Grading summary :microscope:')
             .addTable(summaryTable)
             .addRaw(`Total points: ${points}/${availablePoints}`)
             .write();
     }
-    log('got here');
     // Set the number of points
     if (hasPoints) {
         const text = `Points ${points}/${availablePoints}`;

@@ -27,7 +27,7 @@ const run = async (): Promise<void> => {
     await runAll(json.tests as Array<Test>, cwd, testSuite)
   } catch (error) {
     // If there is any error we'll fail the action with the error message
-    console.error(error.stack)
+    console.error(error.message)
     core.setFailed(`Autograding failure: ${error}`)
   }
 }

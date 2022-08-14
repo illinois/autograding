@@ -271,16 +271,13 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
     log('')
   }
 
-  log(summaryTable.toString())
-
   if (step_summary) {
     core.summary
+    .addHeading('Grading summary :microscope:')
     .addTable(summaryTable)
     .addRaw(`Total points: ${points}/${availablePoints}`)
     .write()
   }
-
-  log('got here')
 
   // Set the number of points
   if (hasPoints) {
