@@ -6,8 +6,6 @@ import {setCheckRunOutput, writeResultJSONFile} from './output'
 import * as os from 'os'
 import chalk from 'chalk'
 
-const color = new chalk.Instance({level: 1})
-
 export type TestComparison = 'exact' | 'included' | 'regex'
 
 export interface Test {
@@ -55,6 +53,8 @@ const log = (text: string): void => {
 const normalizeLineEndings = (text: string): string => {
   return text.replace(/\r\n/gi, '\n').trim()
 }
+
+const step_summary = core.getInput('step_summary')
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const indent = (text: any): string => {
@@ -213,6 +213,8 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
 
   let failed = false
 
+  var summaryTable:any[][] = [['Test name', 'Points', 'Passed?']]
+
   for (const test of tests) {
     let scoreLog = {
       test: test.name,
@@ -226,21 +228,27 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
         hasPoints = true
         availablePoints += test.points
       }
-      log(color.cyan(`📝 ${test.name}`))
+      log(chalk.cyan(`📝 ${test.name}`))
       log('')
       await run(test, cwd)
       log('')
-      log(color.green(`✅ ${test.name}`))
+      log(chalk.green(`✅ ${test.name}`))
       log(``)
       if (test.points) {
         points += test.points
         scoreLog.points = test.points
       }
       scoreLog.success = true
+      if (step_summary) {
+        summaryTable.push([test.name, test.points, '✅'])
+      }
     } catch (error) {
       failed = true
       log('')
-      log(color.red(`❌ ${test.name}`))
+      log(chalk.red(`❌ ${test.name}`))
+      if (step_summary) {
+        summaryTable.push([test.name, test.points, '❌'])
+      }
       core.setFailed(error.message)
     }
 
@@ -255,16 +263,18 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
     // We need a good failure experience
   } else {
     log('')
-    log(color.green('All tests passed'))
+    log(chalk.green('All tests passed'))
     log('')
     log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨')
     log('')
   }
 
+  await core.summary.addTable(summaryTable).write()
+
   // Set the number of points
   if (hasPoints) {
     const text = `Points ${points}/${availablePoints}`
-    log(color.bold.bgCyan.black(text))
+    log(chalk.bold.bgCyan.black(text))
     core.setOutput('Points', `${points}/${availablePoints}`)
 
     await setCheckRunOutput(text)
