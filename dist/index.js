@@ -38905,7 +38905,7 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
             }
             scoreLog.success = true;
             if (step_summary) {
-                summaryTable.push([test.name, test.points, '✅']);
+                summaryTable.push([test.name, test.points ? test.points.toString() : '0', '✅']);
             }
         }
         catch (error) {
@@ -38913,7 +38913,7 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
             log('');
             log(chalk_1.default.red(`❌ ${test.name}`));
             if (step_summary) {
-                summaryTable.push([test.name, test.points, '❌']);
+                summaryTable.push([test.name, test.points ? test.points.toString() : '0', '❌']);
             }
             core.setFailed(error.message);
         }
@@ -38933,7 +38933,7 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
         log('');
     }
     log(summaryTable.toString());
-    await core.summary.addTable(summaryTable).write();
+    core.summary.addTable(summaryTable).write();
     log('got here');
     // Set the number of points
     if (hasPoints) {

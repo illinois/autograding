@@ -242,14 +242,14 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
       }
       scoreLog.success = true
       if (step_summary) {
-        summaryTable.push([test.name, test.points, '✅'])
+        summaryTable.push([test.name, test.points ? test.points.toString() : '0', '✅'])
       }
     } catch (error) {
       failed = true
       log('')
       log(chalk.red(`❌ ${test.name}`))
       if (step_summary) {
-        summaryTable.push([test.name, test.points, '❌'])
+        summaryTable.push([test.name, test.points ? test.points.toString() : '0', '❌'])
       }
       core.setFailed(error.message)
     }
@@ -272,7 +272,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
   }
 
   log(summaryTable.toString())
-  await core.summary.addTable(summaryTable).write()
+  core.summary.addTable(summaryTable).write()
   log('got here')
 
   // Set the number of points
