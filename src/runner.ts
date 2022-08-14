@@ -213,7 +213,9 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
 
   let failed = false
 
-  var summaryTable:any[][] = [['Test name', 'Points', 'Passed?']]
+  var summaryTable:any[][] = [[{data: 'Test name', header: true},
+                               {data: 'Points', header: true},
+                               {data: 'Passed?', header: true}]]
 
   for (const test of tests) {
     let scoreLog = {
@@ -269,7 +271,9 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
     log('')
   }
 
+  log(summaryTable.toString())
   await core.summary.addTable(summaryTable).write()
+  log('got here')
 
   // Set the number of points
   if (hasPoints) {

@@ -38613,371 +38613,6 @@ exports.setCheckRunOutput = function (text) { return __awaiter(void 0, void 0, v
 
 /***/ }),
 
-/***/ 8382:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
-exports.__esModule = true;
-exports.runAll = exports.run = exports.TestOutputError = exports.TestTimeoutError = exports.TestError = void 0;
-var child_process_1 = __nccwpck_require__(2081);
-var tree_kill_1 = __nccwpck_require__(9335);
-var uuid_1 = __nccwpck_require__(5840);
-var core = __nccwpck_require__(2186);
-var output_1 = __nccwpck_require__(2904);
-var os = __nccwpck_require__(2037);
-var chalk_1 = __nccwpck_require__(8707);
-var TestError = /** @class */ (function (_super) {
-    __extends(TestError, _super);
-    function TestError(message) {
-        var _this = _super.call(this, message) || this;
-        Error.captureStackTrace(_this, TestError);
-        return _this;
-    }
-    return TestError;
-}(Error));
-exports.TestError = TestError;
-var TestTimeoutError = /** @class */ (function (_super) {
-    __extends(TestTimeoutError, _super);
-    function TestTimeoutError(message) {
-        var _this = _super.call(this, message) || this;
-        Error.captureStackTrace(_this, TestTimeoutError);
-        return _this;
-    }
-    return TestTimeoutError;
-}(TestError));
-exports.TestTimeoutError = TestTimeoutError;
-var TestOutputError = /** @class */ (function (_super) {
-    __extends(TestOutputError, _super);
-    function TestOutputError(message, expected, actual) {
-        var _this = _super.call(this, message + "\nExpected:\n" + expected + "\nActual:\n" + actual) || this;
-        _this.expected = expected;
-        _this.actual = actual;
-        Error.captureStackTrace(_this, TestOutputError);
-        return _this;
-    }
-    return TestOutputError;
-}(TestError));
-exports.TestOutputError = TestOutputError;
-var log = function (text) {
-    process.stdout.write(text + os.EOL);
-};
-var normalizeLineEndings = function (text) {
-    return text.replace(/\r\n/gi, '\n').trim();
-};
-var step_summary = core.getInput('step_summary');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-var indent = function (text) {
-    var str = '' + new String(text);
-    str = str.replace(/\r\n/gim, '\n').replace(/\n/gim, '\n  ');
-    return str;
-};
-var waitForExit = function (child, timeout) { return __awaiter(void 0, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        // eslint-disable-next-line no-undef
-        return [2 /*return*/, new Promise(function (resolve, reject) {
-                var timedOut = false;
-                log("Waiting for " + child.pid + " to complete (timeout=" + timeout + ").");
-                var exitTimeout = setTimeout(function () {
-                    timedOut = true;
-                    tree_kill_1["default"](child.pid);
-                    reject(new TestTimeoutError("Setup timed out in " + timeout + " milliseconds"));
-                }, timeout);
-                child.once('exit', function (code, signal) {
-                    if (timedOut)
-                        return;
-                    clearTimeout(exitTimeout);
-                    if (code === 0) {
-                        resolve(undefined);
-                    }
-                    else {
-                        reject(new TestError("Error: Exit with code: " + code + " and signal: " + signal));
-                    }
-                });
-                child.once('error', function (error) {
-                    if (timedOut)
-                        return;
-                    clearTimeout(exitTimeout);
-                    reject(error);
-                });
-            })];
-    });
-}); };
-var runSetup = function (test, cwd, timeout) { return __awaiter(void 0, void 0, void 0, function () {
-    var setup;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                if (!test.setup || test.setup === '') {
-                    return [2 /*return*/];
-                }
-                setup = child_process_1.spawn(test.setup, {
-                    cwd: cwd,
-                    shell: true,
-                    timeout: timeout + 1000,
-                    env: {
-                        PATH: process.env['PATH'],
-                        FORCE_COLOR: 'true'
-                    }
-                });
-                // Start with a single new line
-                process.stdout.write(indent('\n'));
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                setup.stdout.on('data', function (chunk) {
-                    process.stdout.write(indent(chunk));
-                });
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                setup.stderr.on('data', function (chunk) {
-                    process.stderr.write(indent(chunk));
-                });
-                return [4 /*yield*/, waitForExit(setup, timeout)];
-            case 1:
-                _a.sent();
-                return [2 /*return*/];
-        }
-    });
-}); };
-var runCommand = function (test, cwd, timeout) { return __awaiter(void 0, void 0, void 0, function () {
-    var child, output, expected, actual;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                child = child_process_1.spawn(test.run, {
-                    cwd: cwd,
-                    shell: true,
-                    timeout: timeout + 1000,
-                    env: {
-                        PATH: process.env['PATH'],
-                        FORCE_COLOR: 'true'
-                    }
-                });
-                output = '';
-                // Start with a single new line
-                process.stdout.write(indent('\n'));
-                child.stdout.on('data', function (chunk) {
-                    process.stdout.write(indent(chunk));
-                    output += chunk;
-                });
-                child.stderr.on('data', function (chunk) {
-                    process.stderr.write(indent(chunk));
-                });
-                // Preload the inputs
-                if (test.input && test.input !== '') {
-                    child.stdin.write(test.input);
-                    child.stdin.end();
-                }
-                return [4 /*yield*/, waitForExit(child, timeout)
-                    // Eventually work off the the test type
-                ];
-            case 1:
-                _a.sent();
-                // Eventually work off the the test type
-                if ((!test.output || test.output == '') && (!test.input || test.input == '')) {
-                    return [2 /*return*/];
-                }
-                expected = normalizeLineEndings(test.output || '');
-                actual = normalizeLineEndings(output);
-                switch (test.comparison) {
-                    case 'exact':
-                        if (actual != expected) {
-                            throw new TestOutputError("The output for test " + test.name + " did not match", expected, actual);
-                        }
-                        break;
-                    case 'regex':
-                        // Note: do not use expected here
-                        if (!actual.match(new RegExp(test.output || ''))) {
-                            throw new TestOutputError("The output for test " + test.name + " did not match", test.output || '', actual);
-                        }
-                        break;
-                    default:
-                        // The default comparison mode is 'included'
-                        if (!actual.includes(expected)) {
-                            throw new TestOutputError("The output for test " + test.name + " did not match", expected, actual);
-                        }
-                        break;
-                }
-                return [2 /*return*/];
-        }
-    });
-}); };
-exports.run = function (test, cwd) { return __awaiter(void 0, void 0, void 0, function () {
-    var timeout, start, elapsed;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                timeout = (test.timeout || 1) * 60 * 1000 || 30000;
-                start = process.hrtime();
-                return [4 /*yield*/, runSetup(test, cwd, timeout)];
-            case 1:
-                _a.sent();
-                elapsed = process.hrtime(start);
-                // Subtract the elapsed seconds (0) and nanoseconds (1) to find the remaining timeout
-                timeout -= Math.floor(elapsed[0] * 1000 + elapsed[1] / 1000000);
-                return [4 /*yield*/, runCommand(test, cwd, timeout)];
-            case 2:
-                _a.sent();
-                return [2 /*return*/];
-        }
-    });
-}); };
-exports.runAll = function (tests, cwd, testSuite) {
-    if (testSuite === void 0) { testSuite = 'autograding'; }
-    return __awaiter(void 0, void 0, void 0, function () {
-        var points, availablePoints, hasPoints, jsonScoreLog, token, failed, summaryTable, _i, tests_1, test_1, scoreLog, error_1, text;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    points = 0;
-                    availablePoints = 0;
-                    hasPoints = false;
-                    jsonScoreLog = [];
-                    token = uuid_1.v4();
-                    log('');
-                    log("::stop-commands::" + token);
-                    log('');
-                    failed = false;
-                    summaryTable = [[{ data: 'Test name', header: true },
-                            { data: 'Points', header: true },
-                            { data: 'Result', header: true }]];
-                    _i = 0, tests_1 = tests;
-                    _a.label = 1;
-                case 1:
-                    if (!(_i < tests_1.length)) return [3 /*break*/, 7];
-                    test_1 = tests_1[_i];
-                    scoreLog = {
-                        test: test_1.name,
-                        success: false,
-                        points: 0,
-                        availablePoints: test_1.points
-                    };
-                    _a.label = 2;
-                case 2:
-                    _a.trys.push([2, 4, , 5]);
-                    if (test_1.points) {
-                        hasPoints = true;
-                        availablePoints += test_1.points;
-                    }
-                    log(chalk_1["default"].cyan("\uD83D\uDCDD " + test_1.name));
-                    log('');
-                    return [4 /*yield*/, exports.run(test_1, cwd)];
-                case 3:
-                    _a.sent();
-                    log('');
-                    log(chalk_1["default"].green("\u2705 " + test_1.name));
-                    log("");
-                    if (test_1.points) {
-                        points += test_1.points;
-                        scoreLog.points = test_1.points;
-                    }
-                    scoreLog.success = true;
-                    if (step_summary) {
-                        summaryTable.push([test_1.name, test_1.points, '✅']);
-                    }
-                    return [3 /*break*/, 5];
-                case 4:
-                    error_1 = _a.sent();
-                    failed = true;
-                    log('');
-                    log(chalk_1["default"].red("\u274C " + test_1.name));
-                    if (step_summary) {
-                        summaryTable.push([test_1.name, test_1.points, '❌']);
-                    }
-                    core.setFailed(error_1.message);
-                    return [3 /*break*/, 5];
-                case 5:
-                    jsonScoreLog.push(scoreLog);
-                    _a.label = 6;
-                case 6:
-                    _i++;
-                    return [3 /*break*/, 1];
-                case 7:
-                    // Restart command processing
-                    log('');
-                    log("::" + token + "::");
-                    if (failed) {
-                        // We need a good failure experience
-                    }
-                    else {
-                        log('');
-                        log(chalk_1["default"].green('All tests passed'));
-                        log('');
-                        log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨');
-                        log('');
-                    }
-                    if (!hasPoints) return [3 /*break*/, 9];
-                    text = "Points " + points + "/" + availablePoints;
-                    log(chalk_1["default"].bold.bgCyan.black(text));
-                    core.setOutput('Points', points + "/" + availablePoints);
-                    return [4 /*yield*/, output_1.setCheckRunOutput(text)];
-                case 8:
-                    _a.sent();
-                    _a.label = 9;
-                case 9: return [4 /*yield*/, output_1.writeResultJSONFile({
-                        points: hasPoints ? points : failed ? 0 : 1,
-                        availablePoints: hasPoints ? availablePoints : 1,
-                        testSuite: testSuite,
-                        log: jsonScoreLog
-                    }, cwd)];
-                case 10:
-                    _a.sent();
-                    return [2 /*return*/];
-            }
-        });
-    });
-};
-
-
-/***/ }),
-
 /***/ 1551:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -39009,7 +38644,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const path_1 = __importDefault(__nccwpck_require__(1017));
-const runner_1 = __nccwpck_require__(8382);
+const runner_1 = __nccwpck_require__(3878);
 const run = async () => {
     try {
         let cwd = process.env['GITHUB_WORKSPACE'];
@@ -39040,6 +38675,280 @@ if (process.env['NODE_ENV'] !== 'test') {
     run();
 }
 exports["default"] = run;
+
+
+/***/ }),
+
+/***/ 3878:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.runAll = exports.run = exports.TestOutputError = exports.TestTimeoutError = exports.TestError = void 0;
+const child_process_1 = __nccwpck_require__(2081);
+const tree_kill_1 = __importDefault(__nccwpck_require__(9335));
+const uuid_1 = __nccwpck_require__(5840);
+const core = __importStar(__nccwpck_require__(2186));
+const output_1 = __nccwpck_require__(2904);
+const os = __importStar(__nccwpck_require__(2037));
+const chalk_1 = __importDefault(__nccwpck_require__(8707));
+class TestError extends Error {
+    constructor(message) {
+        super(message);
+        Error.captureStackTrace(this, TestError);
+    }
+}
+exports.TestError = TestError;
+class TestTimeoutError extends TestError {
+    constructor(message) {
+        super(message);
+        Error.captureStackTrace(this, TestTimeoutError);
+    }
+}
+exports.TestTimeoutError = TestTimeoutError;
+class TestOutputError extends TestError {
+    constructor(message, expected, actual) {
+        super(`${message}\nExpected:\n${expected}\nActual:\n${actual}`);
+        this.expected = expected;
+        this.actual = actual;
+        Error.captureStackTrace(this, TestOutputError);
+    }
+}
+exports.TestOutputError = TestOutputError;
+const log = (text) => {
+    process.stdout.write(text + os.EOL);
+};
+const normalizeLineEndings = (text) => {
+    return text.replace(/\r\n/gi, '\n').trim();
+};
+const step_summary = core.getInput('step_summary');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const indent = (text) => {
+    let str = '' + new String(text);
+    str = str.replace(/\r\n/gim, '\n').replace(/\n/gim, '\n  ');
+    return str;
+};
+const waitForExit = async (child, timeout) => {
+    // eslint-disable-next-line no-undef
+    return new Promise((resolve, reject) => {
+        let timedOut = false;
+        log(`Waiting for ${child.pid} to complete (timeout=${timeout}).`);
+        const exitTimeout = setTimeout(() => {
+            timedOut = true;
+            tree_kill_1.default(child.pid);
+            reject(new TestTimeoutError(`Setup timed out in ${timeout} milliseconds`));
+        }, timeout);
+        child.once('exit', (code, signal) => {
+            if (timedOut)
+                return;
+            clearTimeout(exitTimeout);
+            if (code === 0) {
+                resolve(undefined);
+            }
+            else {
+                reject(new TestError(`Error: Exit with code: ${code} and signal: ${signal}`));
+            }
+        });
+        child.once('error', (error) => {
+            if (timedOut)
+                return;
+            clearTimeout(exitTimeout);
+            reject(error);
+        });
+    });
+};
+const runSetup = async (test, cwd, timeout) => {
+    if (!test.setup || test.setup === '') {
+        return;
+    }
+    const setup = child_process_1.spawn(test.setup, {
+        cwd,
+        shell: true,
+        timeout: timeout + 1000,
+        env: {
+            PATH: process.env['PATH'],
+            FORCE_COLOR: 'true',
+        },
+    });
+    // Start with a single new line
+    process.stdout.write(indent('\n'));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setup.stdout.on('data', chunk => {
+        process.stdout.write(indent(chunk));
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setup.stderr.on('data', chunk => {
+        process.stderr.write(indent(chunk));
+    });
+    await waitForExit(setup, timeout);
+};
+const runCommand = async (test, cwd, timeout) => {
+    const child = child_process_1.spawn(test.run, {
+        cwd,
+        shell: true,
+        timeout: timeout + 1000,
+        env: {
+            PATH: process.env['PATH'],
+            FORCE_COLOR: 'true',
+        },
+    });
+    let output = '';
+    // Start with a single new line
+    process.stdout.write(indent('\n'));
+    child.stdout.on('data', chunk => {
+        process.stdout.write(indent(chunk));
+        output += chunk;
+    });
+    child.stderr.on('data', chunk => {
+        process.stderr.write(indent(chunk));
+    });
+    // Preload the inputs
+    if (test.input && test.input !== '') {
+        child.stdin.write(test.input);
+        child.stdin.end();
+    }
+    await waitForExit(child, timeout);
+    // Eventually work off the the test type
+    if ((!test.output || test.output == '') && (!test.input || test.input == '')) {
+        return;
+    }
+    const expected = normalizeLineEndings(test.output || '');
+    const actual = normalizeLineEndings(output);
+    switch (test.comparison) {
+        case 'exact':
+            if (actual != expected) {
+                throw new TestOutputError(`The output for test ${test.name} did not match`, expected, actual);
+            }
+            break;
+        case 'regex':
+            // Note: do not use expected here
+            if (!actual.match(new RegExp(test.output || ''))) {
+                throw new TestOutputError(`The output for test ${test.name} did not match`, test.output || '', actual);
+            }
+            break;
+        default:
+            // The default comparison mode is 'included'
+            if (!actual.includes(expected)) {
+                throw new TestOutputError(`The output for test ${test.name} did not match`, expected, actual);
+            }
+            break;
+    }
+};
+exports.run = async (test, cwd) => {
+    // Timeouts are in minutes, but need to be in ms
+    let timeout = (test.timeout || 1) * 60 * 1000 || 30000;
+    const start = process.hrtime();
+    await runSetup(test, cwd, timeout);
+    const elapsed = process.hrtime(start);
+    // Subtract the elapsed seconds (0) and nanoseconds (1) to find the remaining timeout
+    timeout -= Math.floor(elapsed[0] * 1000 + elapsed[1] / 1000000);
+    await runCommand(test, cwd, timeout);
+};
+exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
+    let points = 0;
+    let availablePoints = 0;
+    let hasPoints = false;
+    let jsonScoreLog = [];
+    // https://help.github.com/en/actions/reference/development-tools-for-github-actions#stop-and-start-log-commands-stop-commands
+    const token = uuid_1.v4();
+    log('');
+    log(`::stop-commands::${token}`);
+    log('');
+    let failed = false;
+    var summaryTable = [[{ data: 'Test name', header: true },
+            { data: 'Points', header: true },
+            { data: 'Passed?', header: true }]];
+    for (const test of tests) {
+        let scoreLog = {
+            test: test.name,
+            success: false,
+            points: 0,
+            availablePoints: test.points,
+        };
+        try {
+            if (test.points) {
+                hasPoints = true;
+                availablePoints += test.points;
+            }
+            log(chalk_1.default.cyan(`📝 ${test.name}`));
+            log('');
+            await exports.run(test, cwd);
+            log('');
+            log(chalk_1.default.green(`✅ ${test.name}`));
+            log(``);
+            if (test.points) {
+                points += test.points;
+                scoreLog.points = test.points;
+            }
+            scoreLog.success = true;
+            if (step_summary) {
+                summaryTable.push([test.name, test.points, '✅']);
+            }
+        }
+        catch (error) {
+            failed = true;
+            log('');
+            log(chalk_1.default.red(`❌ ${test.name}`));
+            if (step_summary) {
+                summaryTable.push([test.name, test.points, '❌']);
+            }
+            core.setFailed(error.message);
+        }
+        jsonScoreLog.push(scoreLog);
+    }
+    // Restart command processing
+    log('');
+    log(`::${token}::`);
+    if (failed) {
+        // We need a good failure experience
+    }
+    else {
+        log('');
+        log(chalk_1.default.green('All tests passed'));
+        log('');
+        log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨');
+        log('');
+    }
+    log(summaryTable.toString());
+    await core.summary.addTable(summaryTable).write();
+    log('got here');
+    // Set the number of points
+    if (hasPoints) {
+        const text = `Points ${points}/${availablePoints}`;
+        log(chalk_1.default.bold.bgCyan.black(text));
+        core.setOutput('Points', `${points}/${availablePoints}`);
+        await output_1.setCheckRunOutput(text);
+    }
+    await output_1.writeResultJSONFile({
+        points: hasPoints ? points : failed ? 0 : 1,
+        availablePoints: hasPoints ? availablePoints : 1,
+        testSuite: testSuite,
+        log: jsonScoreLog,
+    }, cwd);
+};
 
 
 /***/ }),
