@@ -6,6 +6,8 @@ import {setCheckRunOutput, writeResultJSONFile} from './output'
 import * as os from 'os'
 import chalk from 'chalk'
 
+const color = new chalk.Instance({level: 1})
+
 export type TestComparison = 'exact' | 'included' | 'regex'
 
 export interface Test {
@@ -53,8 +55,6 @@ const log = (text: string): void => {
 const normalizeLineEndings = (text: string): string => {
   return text.replace(/\r\n/gi, '\n').trim()
 }
-
-const step_summary = core.getInput('step_summary')
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const indent = (text: any): string => {
@@ -213,10 +213,6 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
 
   let failed = false
 
-  var summaryTable:any[][] = [[{data: 'Test name', header: true},
-                               {data: 'Points', header: true},
-                               {data: 'Passed?', header: true}]]
-
   for (const test of tests) {
     let scoreLog = {
       test: test.name,
@@ -230,27 +226,21 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
         hasPoints = true
         availablePoints += test.points
       }
-      log(chalk.cyan(`📝 ${test.name}`))
+      log(color.cyan(`📝 ${test.name}`))
       log('')
       await run(test, cwd)
       log('')
-      log(chalk.green(`✅ ${test.name}`))
+      log(color.green(`✅ ${test.name}`))
       log(``)
       if (test.points) {
         points += test.points
         scoreLog.points = test.points
       }
       scoreLog.success = true
-      if (step_summary) {
-        summaryTable.push([test.name, test.points ? test.points.toString() : '0', '✅'])
-      }
     } catch (error) {
       failed = true
       log('')
-      log(chalk.red(`❌ ${test.name}`))
-      if (step_summary) {
-        summaryTable.push([test.name, test.points ? test.points.toString() : '0', '❌'])
-      }
+      log(color.red(`❌ ${test.name}`))
       core.setFailed(error.message)
     }
 
@@ -265,24 +255,16 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
     // We need a good failure experience
   } else {
     log('')
-    log(chalk.green('All tests passed'))
+    log(color.green('All tests passed'))
     log('')
     log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨')
     log('')
   }
 
-  if (step_summary) {
-    core.summary
-    .addHeading('Grading summary :microscope:')
-    .addTable(summaryTable)
-    .addRaw(`Total points: ${points}/${availablePoints}`)
-    .write()
-  }
-
   // Set the number of points
   if (hasPoints) {
     const text = `Points ${points}/${availablePoints}`
-    log(chalk.bold.bgCyan.black(text))
+    log(color.bold.bgCyan.black(text))
     core.setOutput('Points', `${points}/${availablePoints}`)
 
     await setCheckRunOutput(text)
