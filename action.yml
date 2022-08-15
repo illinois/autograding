@@ -15,9 +15,6 @@ inputs:
   test_suite:
     description: A test_suite name within the repository.
     default: 'autograding'
-  step_summary: 
-    description: Boolean describing if a step summary should be generated
-    default: false
 runs:
   using: "node12"
   main: "./dist/index.js"
