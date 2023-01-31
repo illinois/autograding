@@ -130,7 +130,7 @@ const runCommand = async (test: Test, cwd: string, timeout: number): Promise<voi
   const child = spawn(test.run, {
     cwd,
     shell: true,
-    timeout: timeout + 1000,
+    timeout: Math.floor(timeout + 1000),
     env: {
       PATH: process.env['PATH'],
       FORCE_COLOR: 'true',
