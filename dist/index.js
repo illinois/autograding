@@ -38791,7 +38791,7 @@ const runCommand = async (test, cwd, timeout) => {
     const child = child_process_1.spawn(test.run, {
         cwd,
         shell: true,
-        timeout: 300.125126,
+        timeout: timeout + 1000,
         env: {
             PATH: process.env['PATH'],
             FORCE_COLOR: 'true',
@@ -38841,7 +38841,7 @@ const runCommand = async (test, cwd, timeout) => {
 };
 exports.run = async (test, cwd) => {
     // Timeouts are in minutes, but need to be in ms
-    let timeout = (test.timeout || 1) * 60 * 1000 || 30000;
+    let timeout = Math.floor((test.timeout || 1) * 60 * 1000 || 30000);
     const start = process.hrtime();
     await runSetup(test, cwd, timeout);
     const elapsed = process.hrtime(start);

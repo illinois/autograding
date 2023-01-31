@@ -130,7 +130,7 @@ const runCommand = async (test: Test, cwd: string, timeout: number): Promise<voi
   const child = spawn(test.run, {
     cwd,
     shell: true,
-    timeout: 300.125126,
+    timeout: timeout + 1000,
     env: {
       PATH: process.env['PATH'],
       FORCE_COLOR: 'true',
@@ -190,7 +190,7 @@ const runCommand = async (test: Test, cwd: string, timeout: number): Promise<voi
 
 export const run = async (test: Test, cwd: string): Promise<void> => {
   // Timeouts are in minutes, but need to be in ms
-  let timeout = (test.timeout || 1) * 60 * 1000 || 30000
+  let timeout = Math.floor((test.timeout || 1) * 60 * 1000 || 30000)
   const start = process.hrtime()
   await runSetup(test, cwd, timeout)
   const elapsed = process.hrtime(start)
