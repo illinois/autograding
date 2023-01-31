@@ -38791,7 +38791,7 @@ const runCommand = async (test, cwd, timeout) => {
     const child = child_process_1.spawn(test.run, {
         cwd,
         shell: true,
-        timeout: Math.floor(timeout + 1000),
+        timeout: 300.125126,
         env: {
             PATH: process.env['PATH'],
             FORCE_COLOR: 'true',
