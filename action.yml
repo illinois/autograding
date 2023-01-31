@@ -19,5 +19,5 @@ inputs:
     description: Boolean describing if a step summary should be generated
     default: false
 runs:
-  using: "node16"
+  using: "node12"
   main: "./dist/index.js"
