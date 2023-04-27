@@ -1,6 +1,6 @@
 # Github University: A Language-Agnostic Automated Grading Solution
 
-Illinois Github University is an autograding toolset that leverages Github's Actions platform to create a stable, secure, and modular autograding platform that can easily be configured as a drop-in solution for any course regardless of 
+Illinois Github University is an autograding toolset that leverages Github's Actions platform to create a stable, secure, and modular autograding platform that can easily be configured as a drop-in solution for any course regardless of core language or toolset of choice.
 
 ## Actions Suite
 
