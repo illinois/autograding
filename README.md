@@ -1,15 +1,86 @@
 # Github University: A Language-Agnostic Automated Grading Solution
 
-## 1.Overview
-As the university-wide demand for courses requiring computer programming continues to spike, courses have struggled to meet the infrastructural demands of grading student code. Hand-grading student code does not scale to courses of large sizes, and existing automated grading tools often cannot be easily configured to meet the demands of individual courses relying on vastly different programming languages and toolsets. To solve, we present Github University, a modular, scalable, and secure code grading platform that that leverages Github Actions to automate all parts of the grading process, including pre-grading checks and grade book compilation. Github University can be easily configured for any course regardless of programming language and libraries of choice, and runs student code in a containerized environment to guarantee security and consistency. Github Actions is currently deployed in multiple courses containing more than 500 students total, and we recommend its general adoption for courses requiring autograding.
+Illinois Github University is an autograding toolset that leverages Github's Actions platform to create a stable, secure, and modular autograding platform that can easily be configured as a drop-in solution for any course regardless of 
 
-![Untitled Diagram](https://user-images.githubusercontent.com/112009367/231647026-1dfed482-b598-442b-bc36-15786c142555.jpg)
+## Actions Suite
 
-## 2.Setup
+Github university implements a number of configurable grading actions that cover all parts of grading workflows, including pre and post-grading checks:
 
-## 3.Usage
+### :rocket: [@illinois/autograding](https://github.com/illinois/autograding/blob/main/doc/autograding.md) 
 
-## 4.Example repositories
+Lightweight and language-agnostic autograder implementation. Runs student code against a test suite, logs student grades as an artifact, and provides a detailed grading summary.
 
-## 5.Additional resources
+### :page_facing_up: [@illinois/local-copy](https://github.com/illinois/local-copy)
+
+Replaces files in a cloned student repository with files from a reference repository prior to autograding. Removes any student changes to files necessary for autograding.
+
+### :ballot_box_with_check: [@illinois/verify-policy](https://github.com/illinois/verify-policy)
+
+Performs pre-grading checks to verify that a student's submission adheres to assignment policy. Verifies that required files exist, cross-references files against a reference to make sure that they have not been altered, and stops workflows if they are run after a set due date.
+
+### :signal_strength: [@illinois/autograding-telemetry](https://github.com/illinois/autograding-telemetry)
+
+Logs workflow and autograding data to a remote server or an artifact. Useful for instructors wanting a data-driven approach to grading.
+
+## Usage
+
+A full workflow utilizing all of the current Github University actions suite is provided below as reference:
+```yaml
+autograding:
+  name: autograding
+  runs-on: ubuntu-latest
+  timeout-minutes: 5
+  steps:
+  - name: Checkout student repository
+    id: sr-checkout
+    uses: actions/checkout@v3
+  - name: Checkout release repository
+    id: release-checkout
+    uses: actions/checkout@v3
+  - name: Copy reference files
+    id: local-copy
+    uses: illinois/local-copy@v1
+    with:
+      src_path: release
+      dst_path: .
+      copy: >
+        autograding-files.txt : autograding-file.txt,
+        Makefile : Makefile
+  - name: Verify assignment policy
+    id: verify-policy
+    uses: illinois/verify-policy@v3
+    with:
+      due_date: '2022-06-21T00:00:00+00:00'
+      required_files: 'mp1/Makefile, .github/workflows/mp1-autograder-action.yml'
+      reference_files: 'mp1/tests/test-file.cpp : reference/tests/test-file.cpp, mp1/Makefile : reference/Makefile'
+  - name: Autograding
+    id: autograding
+    uses: illinois/autograding@v3
+    with:
+      path: mp1/
+      test_suite: autograding
+      step_summary: true
+  - name: Log telemetry data
+    if: ${{ always() }}
+    uses: illinois/telemetry@v1
+    with:
+      endpoint: "http://arbitrary.remote.server:5000/"
+      create_artifact: true
+      log_date: true
+      user: ${{ github.actor }}
+      autograding_status: ${{ steps.autograding.outcome }}
+      points: ${{ steps.autograding.outputs.Points }}
+      assignment: 'mp1-autograding'
+```
+
+## Example Repositories
+
+A number of example repositories are provided below as reference:
+
+- [Example C/C++ repository](https://github.com/cs340-illinois/Example-Classroom-Repo-Default-)
+
+- [Example Python repository](https://github.com/cs340-illinois/fa22_cs340_kennel2)
+
+
+
 
