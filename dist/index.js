@@ -38914,6 +38914,10 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
         log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨');
         log('');
     }
+    const all_or_nothing = core.getInput("all_or_nothing", { required: false }) == 'true';
+    if (all_or_nothing) {
+        points = points == availablePoints ? availablePoints : 0;
+    }
     if (step_summary) {
         core.summary
             .addHeading('Grading summary :microscope:')
