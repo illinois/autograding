@@ -227,6 +227,9 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
       availablePoints: test.points,
     }
 
+    let scoreString = '-'
+    let scoreStatus = '❌'
+
     try {
       if (test.points) {
         hasPoints = true
@@ -243,36 +246,26 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
         scoreLog.points = test.points
       }
       scoreLog.success = true
-      if (step_summary) {
-        summaryTable.push([test.name, test.points ? test.points.toString() : '0', '✅'])
+      scoreStatus = '✅'
+      if (!all_or_nothing) {
+        scoreString = points ? points.toString() : "-"
       }
     } catch (error) {
       failed = true
       log('')
       log(chalk.red(`❌ ${test.name}`))
-      if (step_summary) {
-        summaryTable.push([test.name, test.points ? test.points.toString() : '0', '❌'])
+      scoreStatus = '❌'
+      if (!all_or_nothing) {
+        scoreString = '0'
       }
       core.setFailed(error.message)
     }
 
+    if (step_summary) {
+      summaryTable.push([test.name, scoreString, scoreStatus])
+    }
+
     jsonScoreLog.push(scoreLog)
-  }
-
-  if (failed && all_or_nothing) {
-    summaryTable = summaryTable.map((row, index) => {
-      if (index == 0) {
-        return row
-      }
-      row[1] = '0'
-      return row
-    })
-
-    jsonScoreLog = jsonScoreLog.map(row => {
-      row.success = false
-      row.points = 0
-      return row
-    })
   }
 
   // Restart command processing
