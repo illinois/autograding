@@ -217,6 +217,8 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
                                {data: 'Points', header: true},
                                {data: 'Passed?', header: true}]]
 
+  const all_or_nothing = core.getInput("all_or_nothing", {required: false}) == 'true'
+
   for (const test of tests) {
     let scoreLog = {
       test: test.name,
@@ -257,6 +259,22 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
     jsonScoreLog.push(scoreLog)
   }
 
+  if (failed && all_or_nothing) {
+    summaryTable = summaryTable.map((row, index) => {
+      if (index == 0) {
+        return row
+      }
+      row[1] = '0'
+      return row
+    })
+
+    jsonScoreLog = jsonScoreLog.map(row => {
+      row.success = false
+      row.points = 0
+      return row
+    })
+  }
+
   // Restart command processing
   log('')
   log(`::${token}::`)
@@ -270,8 +288,6 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
     log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨')
     log('')
   }
-
-  const all_or_nothing = core.getInput("all_or_nothing", {required: false}) == 'true'
 
   if (all_or_nothing) {
     points = points == availablePoints ? availablePoints : 0
