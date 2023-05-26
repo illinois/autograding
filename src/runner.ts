@@ -217,6 +217,8 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
                                {data: 'Points', header: true},
                                {data: 'Passed?', header: true}]]
 
+  const all_or_nothing = core.getInput("all_or_nothing", {required: false}) == 'true'
+
   for (const test of tests) {
     let scoreLog = {
       test: test.name,
@@ -224,6 +226,9 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
       points: 0,
       availablePoints: test.points,
     }
+
+    let scoreString = '-'
+    let scoreStatus = '❌'
 
     try {
       if (test.points) {
@@ -241,17 +246,23 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
         scoreLog.points = test.points
       }
       scoreLog.success = true
-      if (step_summary) {
-        summaryTable.push([test.name, test.points ? test.points.toString() : '0', '✅'])
+      scoreStatus = '✅'
+      if (!all_or_nothing) {
+        scoreString = points ? points.toString() : "-"
       }
     } catch (error) {
       failed = true
       log('')
       log(chalk.red(`❌ ${test.name}`))
-      if (step_summary) {
-        summaryTable.push([test.name, test.points ? test.points.toString() : '0', '❌'])
+      scoreStatus = '❌'
+      if (!all_or_nothing) {
+        scoreString = '0'
       }
       core.setFailed(error.message)
+    }
+
+    if (step_summary) {
+      summaryTable.push([test.name, scoreString, scoreStatus])
     }
 
     jsonScoreLog.push(scoreLog)
@@ -269,6 +280,10 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
     log('')
     log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨')
     log('')
+  }
+
+  if (all_or_nothing) {
+    points = points == availablePoints ? availablePoints : 0
   }
 
   if (step_summary) {

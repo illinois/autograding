@@ -18,6 +18,9 @@ inputs:
   step_summary: 
     description: Boolean describing if a step summary should be generated
     default: false
+  all_or_nothing:
+    description: Boolean describing if points are awared if and only if all points have been earned.
+    default: false
 runs:
   using: "node16"
   main: "./dist/index.js"
