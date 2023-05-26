@@ -38863,6 +38863,7 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
     var summaryTable = [[{ data: 'Test name', header: true },
             { data: 'Points', header: true },
             { data: 'Passed?', header: true }]];
+    const all_or_nothing = core.getInput("all_or_nothing", { required: false }) == 'true';
     for (const test of tests) {
         let scoreLog = {
             test: test.name,
@@ -38870,6 +38871,8 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
             points: 0,
             availablePoints: test.points,
         };
+        let scoreString = '-';
+        let scoreStatus = '❌';
         try {
             if (test.points) {
                 hasPoints = true;
@@ -38886,18 +38889,23 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
                 scoreLog.points = test.points;
             }
             scoreLog.success = true;
-            if (step_summary) {
-                summaryTable.push([test.name, test.points ? test.points.toString() : '0', '✅']);
+            scoreStatus = '✅';
+            if (!all_or_nothing) {
+                scoreString = points ? points.toString() : "-";
             }
         }
         catch (error) {
             failed = true;
             log('');
             log(chalk_1.default.red(`❌ ${test.name}`));
-            if (step_summary) {
-                summaryTable.push([test.name, test.points ? test.points.toString() : '0', '❌']);
+            scoreStatus = '❌';
+            if (!all_or_nothing) {
+                scoreString = '0';
             }
             core.setFailed(error.message);
+        }
+        if (step_summary) {
+            summaryTable.push([test.name, scoreString, scoreStatus]);
         }
         jsonScoreLog.push(scoreLog);
     }
@@ -38914,7 +38922,6 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
         log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨');
         log('');
     }
-    const all_or_nothing = core.getInput("all_or_nothing", { required: false }) == 'true';
     if (all_or_nothing) {
         points = points == availablePoints ? availablePoints : 0;
     }
