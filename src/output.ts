@@ -10,6 +10,13 @@ const options = {
   continueOnError: false,
 }
 
+
+/**
+ * Uploads a JSON file containing information about the test suite run.
+ * 
+ * @param json Dict containing artifact data.
+ * @param cwd Filepath to write JSON artifact to. 
+ */
 export const writeResultJSONFile = async (
   json: {points: number; availablePoints: number; testSuite: string; log: any},
   cwd: string,
@@ -21,6 +28,11 @@ export const writeResultJSONFile = async (
   await artifactClient.uploadArtifact(artifactName, [filepath], cwd, options)
 }
 
+/**
+ * Sends check run data to GitHub.
+ * 
+ * @param text The text to be written in the check run
+ */
 export const setCheckRunOutput = async (text: string): Promise<void> => {
   // If we have nothing to output, then bail
   if (text === '') return

@@ -3,6 +3,10 @@ import fs from 'fs'
 import path from 'path'
 import {Test, runAll} from './runner'
 
+/**
+ * Main autograding function. Runs the entire test suite as specified in
+ * `.github/classroom/<testSuite>.json
+ */
 const run = async (): Promise<void> => {
   try {
     let cwd = process.env['GITHUB_WORKSPACE']
