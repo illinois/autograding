@@ -38863,7 +38863,7 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
     var summaryTable = [[{ data: 'Test name', header: true },
             { data: 'Points', header: true },
             { data: 'Passed?', header: true }]];
-    const all_or_nothing = core.getInput("all_or_nothing", { required: false }) == 'true';
+    const allOrNothing = core.getInput("allOrNothing", { required: false }) == 'true';
     for (const test of tests) {
         let scoreLog = {
             test: test.name,
@@ -38890,7 +38890,7 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
             }
             scoreLog.success = true;
             scoreStatus = '✅';
-            if (!all_or_nothing) {
+            if (!allOrNothing) {
                 scoreString = points ? points.toString() : "-";
             }
         }
@@ -38899,7 +38899,7 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
             log('');
             log(chalk_1.default.red(`❌ ${test.name}`));
             scoreStatus = '❌';
-            if (!all_or_nothing) {
+            if (!allOrNothing) {
                 scoreString = '0';
             }
             core.setFailed(error.message);
@@ -38922,14 +38922,23 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
         log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨');
         log('');
     }
-    if (all_or_nothing) {
+    if (allOrNothing) {
         points = points == availablePoints ? availablePoints : 0;
     }
     if (step_summary) {
+        let pointsReport = `Total points: ${points}/${availablePoints}`;
+        if (allOrNothing) {
+            if (failed) {
+                pointsReport = `0% - Not all tests passed`;
+            }
+            else {
+                pointsReport = `100% - All tests passed! 🎉`;
+            }
+        }
         core.summary
             .addHeading('Grading summary :microscope:')
             .addTable(summaryTable)
-            .addRaw(`Total points: ${points}/${availablePoints}`)
+            .addRaw(pointsReport)
             .write();
     }
     // Set the number of points

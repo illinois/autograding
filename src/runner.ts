@@ -217,7 +217,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
                                {data: 'Points', header: true},
                                {data: 'Passed?', header: true}]]
 
-  const all_or_nothing = core.getInput("all_or_nothing", {required: false}) == 'true'
+  const allOrNothing = core.getInput("allOrNothing", {required: false}) == 'true'
 
   for (const test of tests) {
     let scoreLog = {
@@ -247,7 +247,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
       }
       scoreLog.success = true
       scoreStatus = '✅'
-      if (!all_or_nothing) {
+      if (!allOrNothing) {
         scoreString = points ? points.toString() : "-"
       }
     } catch (error) {
@@ -255,7 +255,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
       log('')
       log(chalk.red(`❌ ${test.name}`))
       scoreStatus = '❌'
-      if (!all_or_nothing) {
+      if (!allOrNothing) {
         scoreString = '0'
       }
       core.setFailed(error.message)
@@ -282,15 +282,23 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
     log('')
   }
 
-  if (all_or_nothing) {
+  if (allOrNothing) {
     points = points == availablePoints ? availablePoints : 0
   }
 
   if (step_summary) {
+    let pointsReport = `Total points: ${points}/${availablePoints}`
+    if (allOrNothing) {
+      if (failed) {
+        pointsReport = `0% - Not all tests passed`
+      } else {
+        pointsReport = `100% - All tests passed! 🎉`
+      }
+    }
     core.summary
     .addHeading('Grading summary :microscope:')
     .addTable(summaryTable)
-    .addRaw(`Total points: ${points}/${availablePoints}`)
+    .addRaw(pointsReport)
     .write()
   }
 
