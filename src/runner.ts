@@ -217,7 +217,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
                                {data: 'Points', header: true},
                                {data: 'Passed?', header: true}]]
 
-  const allOrNothing = core.getInput("allOrNothing", {required: false}) == 'true'
+  const allOrNothing = core.getInput("all_or_nothing", {required: false}) == 'true'
 
   for (const test of tests) {
     let scoreLog = {

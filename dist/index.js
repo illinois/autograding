@@ -38863,7 +38863,7 @@ exports.runAll = async (tests, cwd, testSuite = 'autograding') => {
     var summaryTable = [[{ data: 'Test name', header: true },
             { data: 'Points', header: true },
             { data: 'Passed?', header: true }]];
-    const allOrNothing = core.getInput("allOrNothing", { required: false }) == 'true';
+    const allOrNothing = core.getInput("all_or_nothing", { required: false }) == 'true';
     for (const test of tests) {
         let scoreLog = {
             test: test.name,
