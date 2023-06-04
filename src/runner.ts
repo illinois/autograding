@@ -82,7 +82,7 @@ const waitForExit = async (child: ChildProcess, timeout: number): Promise<void> 
 
     const exitTimeout = setTimeout(() => {
       timedOut = true
-      kill(child.pid)
+      kill(child.pid!)
       reject(new TestTimeoutError(`Setup timed out in ${timeout} milliseconds`))
     }, timeout)
 
@@ -250,7 +250,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
                                {data: 'Passed?', header: true}]]
 
   /** Fetch YAML inputs from the workflow. */
-  const step_summary = core.getInput('step_summary')
+  const step_summary = core.getInput('step_summary') == 'true'
   const allOrNothing = core.getInput("all_or_nothing", {required: false}) == 'true'
 
   for (const test of tests) {
@@ -284,7 +284,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
       if (!allOrNothing) {
         scoreString = points ? points.toString() : "-"
       }
-    } catch (error) {
+    } catch (error: any) {
       failed = true
       log('')
       log(chalk.red(`❌ ${test.name}`))
