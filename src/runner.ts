@@ -8,15 +8,18 @@ import chalk from 'chalk'
 
 export type TestComparison = 'exact' | 'included' | 'regex'
 
+/**
+ * 
+ */
 export interface Test {
   readonly name: string
-  readonly setup: string
+  readonly setup?: string
   readonly run: string
   readonly input?: string
   readonly output?: string
   readonly timeout: number
   readonly points?: number
-  readonly comparison: TestComparison
+  readonly comparison?: TestComparison
 }
 
 export class TestError extends Error {
@@ -46,32 +49,40 @@ export class TestOutputError extends TestError {
   }
 }
 
+/**
+ * UTILITY FUNCTIONS
+ */
+/** Writes `text` to stdout. */
 const log = (text: string): void => {
   process.stdout.write(text + os.EOL)
 }
-
+/** Trims `text` and reduces \r\n to \.n */
 const normalizeLineEndings = (text: string): string => {
   return text.replace(/\r\n/gi, '\n').trim()
 }
-
-const step_summary = core.getInput('step_summary')
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const indent = (text: any): string => {
   let str = '' + new String(text)
   str = str.replace(/\r\n/gim, '\n').replace(/\n/gim, '\n  ')
   return str
 }
 
+/**
+ * Sets a timer for `child` to complete. If `child` does not complete in
+ * `timeout` minutes, the process is killed and the test case auto-fails.
+ * 
+ * @param child Process being timed
+ * @param timeout The timeout for the process, in milliseconds
+ * @returns A resolved promise if the process completes in time, a rejected
+ * promise otherwise.
+ */
 const waitForExit = async (child: ChildProcess, timeout: number): Promise<void> => {
-  // eslint-disable-next-line no-undef
   return new Promise((resolve, reject) => {
     let timedOut = false
     log(`Waiting for ${child.pid} to complete (timeout=${timeout}).`)
 
     const exitTimeout = setTimeout(() => {
       timedOut = true
-      kill(child.pid)
+      kill(child.pid!)
       reject(new TestTimeoutError(`Setup timed out in ${timeout} milliseconds`))
     }, timeout)
 
@@ -89,17 +100,25 @@ const waitForExit = async (child: ChildProcess, timeout: number): Promise<void> 
     child.once('error', (error: Error) => {
       if (timedOut) return
       clearTimeout(exitTimeout)
-
       reject(error)
     })
   })
 }
 
+/**
+ * Spawns a process that runs the command specified in `test.setup`. If the
+ * process does not complete in `timeout` milliseconds, the test auto-fails and
+ * the function returns a rejected promise.
+ * 
+ * @param test Test for which setup is being run
+ * @param cwd The current working directory
+ * @param timeout The timeout for the process, in milliseconds
+ * @returns 
+ */
 const runSetup = async (test: Test, cwd: string, timeout: number): Promise<void> => {
   if (!test.setup || test.setup === '') {
     return
   }
-
   const setup = spawn(test.setup, {
     cwd,
     shell: true,
@@ -109,23 +128,28 @@ const runSetup = async (test: Test, cwd: string, timeout: number): Promise<void>
       FORCE_COLOR: 'true',
     },
   })
-
-  // Start with a single new line
+  /** Write newline to stdout to flush output */
   process.stdout.write(indent('\n'))
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  /** Configure event handlers for stdout and stderr */
   setup.stdout.on('data', chunk => {
     process.stdout.write(indent(chunk))
   })
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setup.stderr.on('data', chunk => {
     process.stderr.write(indent(chunk))
   })
-
   await waitForExit(setup, timeout)
 }
 
+/**
+ * Runs the command used to run `test`.  If the process does not complete in 
+ * `timeout` milliseconds, the test auto-fails.
+ * 
+ * @param test Test being run
+ * @param cwd The current working directory
+ * @param timeout The timeout for the process, in milliseconds
+ * @returns 
+ */
 const runCommand = async (test: Test, cwd: string, timeout: number): Promise<void> => {
   const child = spawn(test.run, {
     cwd,
@@ -159,7 +183,8 @@ const runCommand = async (test: Test, cwd: string, timeout: number): Promise<voi
 
   await waitForExit(child, timeout)
 
-  // Eventually work off the the test type
+  // If the test has no input or output, we know it isn't matching against
+  // any user-provided input, so exit early
   if ((!test.output || test.output == '') && (!test.input || test.input == '')) {
     return
   }
@@ -188,6 +213,13 @@ const runCommand = async (test: Test, cwd: string, timeout: number): Promise<voi
   }
 }
 
+/**
+ * Wrapper function for running a single test. Runs test setup
+ * and executes the test command.
+ * 
+ * @param test Test being run
+ * @param cwd Current working directory
+ */
 export const run = async (test: Test, cwd: string): Promise<void> => {
   // Timeouts are in minutes, but need to be in ms
   let timeout = Math.floor((test.timeout || 1) * 60 * 1000 || 30000)
@@ -200,10 +232,10 @@ export const run = async (test: Test, cwd: string): Promise<void> => {
 }
 
 export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autograding'): Promise<void> => {
-  let points = 0
-  let availablePoints = 0
-  let hasPoints = false
-  let jsonScoreLog = []
+  let points: number = 0
+  let availablePoints: number = 0
+  let hasPoints: boolean = false
+  let jsonScoreLog: Array<any> = []
 
   // https://help.github.com/en/actions/reference/development-tools-for-github-actions#stop-and-start-log-commands-stop-commands
   const token = uuidv4()
@@ -217,6 +249,8 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
                                {data: 'Points', header: true},
                                {data: 'Passed?', header: true}]]
 
+  /** Fetch YAML inputs from the workflow. */
+  const step_summary = core.getInput('step_summary') == 'true'
   const allOrNothing = core.getInput("all_or_nothing", {required: false}) == 'true'
 
   for (const test of tests) {
@@ -250,7 +284,7 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
       if (!allOrNothing) {
         scoreString = points ? points.toString() : "-"
       }
-    } catch (error) {
+    } catch (error: any) {
       failed = true
       log('')
       log(chalk.red(`❌ ${test.name}`))

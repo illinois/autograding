@@ -1,78 +1,87 @@
-import path from 'path'
 import * as core from '@actions/core'
-import * as github from '@actions/github'
-import {WebhookPayload} from '@actions/github/lib/interfaces'
-import nock from 'nock'
+import * as output from '../output'
 import run from '../autograding'
 
-beforeEach(() => {
-  // resetModules allows you to safely change the environment and mock imports
-  // separately in each of your tests
-  jest.resetModules()
-  jest.restoreAllMocks()
-  jest.spyOn(core, 'setOutput').mockImplementation(() => {
-    return
+const LANGUAGE: string = 'dummy'
+
+/**
+ * Creates a mock getInput implementation to replicate a live environemnt.
+ * 
+ * @param allOrNothing 
+ * @returns 
+ */
+function createMockGetInput():
+ (inputName: string) => string {
+  return (inputName) => {
+    switch (inputName) {
+      case 'all_or_nothing':
+        return 'true'
+      case 'step_summary':
+        return 'false'
+      case 'path':
+        return `${LANGUAGE}`
+      case 'test_suite':
+        return 'autograding'
+      default:
+        return ''
+    }
+  }
+}
+
+/**
+ * MAIN TEST SUITE
+ */
+describe('run tests', () => {
+  // Do dummy mock implementations for all output.ts functions, we don't care
+  // about these right now
+  jest.spyOn(core, 'setOutput').mockImplementation(() => { return })
+  jest.spyOn(output, 'writeResultJSONFile').mockImplementation(async () => { return })
+  beforeEach(() => {
+    process.env['GITHUB_WORKSPACE'] = __dirname
   })
-  jest.spyOn(core, 'getInput').mockImplementation((name: string): string => {
-    if (name === 'token') return '12345'
-    return ''
+  afterEach(() => {
+    jest.resetModules()
+    jest.clearAllMocks()
   })
 
-  process.env['GITHUB_WORKSPACE'] = path.resolve(__dirname, 'java')
-  process.env['GITHUB_REPOSITORY'] = 'example/repository'
-
-  // Create a mock payload for our tests to use
-  // https://developer.github.com/v3/activity/events/types/#issuecommentevent
-  github.context.payload = {
-    ref: 'refs/tags/simple-tag',
-    before: '6113728f27ae82c7b1a177c8d03f9e96e0adf246',
-    after: '0000000000000000000000000000000000000000',
-    commits: [],
-    repository: {
-      id: 186853002,
-      node_id: 'MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=',
-      name: 'repository',
-      full_name: 'example/repository',
-      owner: {
-        name: 'Codertocat',
-        email: '21031067+Codertocat@users.noreply.github.com',
-        login: 'Codertocat',
-        id: 21031067,
-      },
-    },
-  } as WebhookPayload
-})
-
-afterEach(() => {
-  expect(nock.pendingMocks()).toEqual([])
-  nock.isDone()
-  nock.cleanAll()
-})
-
-describe('autograding action', () => {
-  // The most basic test is just checking that the run method doesn't throw an error.
-  // This test relies on our default payload.
-  it('runs', async () => {
+  test('Complete run from scratch can complete without error', async () => {
+    const setOutputSpy = jest.spyOn(core, 'setOutput')
+    jest.spyOn(core, 'getInput').mockImplementation(
+      createMockGetInput()
+    )
     await expect(run()).resolves.not.toThrow()
-  }, 10000)
+    expect(setOutputSpy).toHaveBeenCalledWith('Points', '1/1')
+  })
 
-  // it('checks the protected files', async (): Promise<void> => {
-  //   await run()
-  // }, 10000)
+  test('Fails gracefully with empty GITHUB_WORKSPACE', async () => {
+    const setFailedSpy = jest.spyOn(core, 'setFailed')
+    process.env['GITHUB_WORKSPACE'] = ''
+    jest.spyOn(core, 'getInput').mockImplementation(
+      createMockGetInput()
+    )
+    await expect(run()).resolves.not.toThrow()
+    expect(setFailedSpy).toHaveBeenCalled()
+  })
 
-  // it('executes the tests', async (): Promise<void> => {
-  //   await run()
-  // }, 10000)
-
-  // it('executes passing input/output tests', async (): Promise<void> => {
-  //   await run()
-  // }, 10000)
-
-  // it('executes failing input/output tests', async (): Promise<void> => {
-  //   await run()
-  // }, 10000)
-
-  // it('creates feedback', async (): Promise<void> => {
-  //   await run()
-  // }, 10000)
+  test('Fails gracefully with bad path input', async () => {
+    const setFailedSpy = jest.spyOn(core, 'setFailed')
+    jest.spyOn(core, 'getInput').mockImplementation(
+      (inputName) => {
+        switch (inputName) {
+          case 'all_or_nothing':
+            return 'true'
+          case 'step_summary':
+            return 'false'
+          case 'path':
+            return 'rubbish/file/path' // the bad fp in question
+          case 'test_suite':
+            return 'autograding'
+          default:
+            return ''
+        }
+      }
+    )
+    await expect(run()).resolves.not.toThrow()
+    expect(setFailedSpy).toHaveBeenCalled()
+  })
 })

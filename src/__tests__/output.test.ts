@@ -24,6 +24,38 @@ afterEach(() => {
   nock.cleanAll()
 })
 
+/* beforeEach(() => {
+  // resetModules allows you to safely change the environment and mock imports
+  // separately in each of your tests
+  jest.resetModules()
+  jest.restoreAllMocks()
+
+  process.env['GITHUB_WORKSPACE'] = path.resolve(__dirname, 'java')
+  process.env['GITHUB_REPOSITORY'] = 'example/repository'
+  process.env['GITHUB_STEP_SUMMARY'] = ''
+
+  // Create a mock payload for our tests to use
+  // https://developer.github.com/v3/activity/events/types/#issuecommentevent
+  github.context.payload = {
+    ref: 'refs/tags/simple-tag',
+    before: '6113728f27ae82c7b1a177c8d03f9e96e0adf246',
+    after: '0000000000000000000000000000000000000000',
+    commits: [],
+    repository: {
+      id: 186853002,
+      node_id: 'MDEwOlJlcG9zaXRvcnkxODY4NTMwMDI=',
+      name: 'repository',
+      full_name: 'example/repository',
+      owner: {
+        name: 'Codertocat',
+        email: '21031067+Codertocat@users.noreply.github.com',
+        login: 'Codertocat',
+        id: 21031067,
+      },
+    },
+  } as WebhookPayload
+}) */
+
 describe('output', () => {
   beforeEach(() => {
     // Use nock to mock out the external call to delete the comment
