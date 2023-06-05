@@ -232,6 +232,7 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
     try {
       if (test.points) {
         hasPoints = true
+        testResult.points = test.points
         report.availablePoints += test.points
       }
       // Delimit each case in stdout
@@ -265,11 +266,10 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
     if (step_summary) {
       summaryTable.push([
         test.name,
-        allOrNothing ? testResult.points.toString() : '-',
+        allOrNothing ? '-' : testResult.points.toString(),
         testResult.success ? '✅' : '❌',
       ])
     }
-
     report.log.push(testResult)
   }
   // Restart command processing
@@ -290,7 +290,7 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
     report.points = failed ? 0 : report.points
   }
   if (step_summary) {
-    let pointsReport = `Total points: ${report.points}/${report.availablePoints}`
+    let pointsReport: string = `Total points: ${report.points}/${report.availablePoints}`
     if (allOrNothing) {
       if (failed) {
         pointsReport = `0% - Not all tests passed`

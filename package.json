@@ -5,8 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc --noEmit && ncc build src/autograding.ts -o dist",
-    "test": "tsc --noEmit && jest runner.test.ts --verbose false",
-    "lint": "eslint . --ext .ts"
+    "test": "tsc --noEmit && jest runner.test.ts --verbose false"
   },
   "keywords": [
     "github",

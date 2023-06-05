@@ -19592,6 +19592,7 @@ const runAll = async (testSuite, cwd, testSuiteName = 'autograding') => {
         try {
             if (test.points) {
                 hasPoints = true;
+                testResult.points = test.points;
                 report.availablePoints += test.points;
             }
             // Delimit each case in stdout
@@ -19626,7 +19627,7 @@ const runAll = async (testSuite, cwd, testSuiteName = 'autograding') => {
         if (step_summary) {
             summaryTable.push([
                 test.name,
-                allOrNothing ? testResult.points.toString() : '-',
+                allOrNothing ? '-' : testResult.points.toString(),
                 testResult.success ? '✅' : '❌',
             ]);
         }
