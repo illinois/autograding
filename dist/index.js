@@ -19551,10 +19551,11 @@ const run = async (test, cwd) => {
 };
 exports.run = run;
 /**
+ * Runs each test in testSuite in serial, logging results to $GITHUB_STEP_SUMMARY
+ * if necessary and uploading a checkRun to GitHub.
  *
- *
- * @param tests
- * @param cwd
+ * @param testSuite
+ * @param cwd Current working directory
  * @param testSuite
  */
 const runAll = async (testSuite, cwd, testSuiteName = 'autograding') => {
@@ -19648,9 +19649,11 @@ const runAll = async (testSuite, cwd, testSuiteName = 'autograding') => {
         log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨');
         log('');
     }
+    // Reset points to 0 if a test has been failed with AoN
     if (allOrNothing) {
         report.points = failed ? 0 : report.points;
     }
+    // Write step summary to $GITHUB_STEP_SUMMARY
     if (step_summary) {
         let pointsReport = `Total points: ${report.points}/${report.availablePoints}`;
         if (allOrNothing) {
