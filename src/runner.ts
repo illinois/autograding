@@ -1,53 +1,13 @@
+import * as core from '@actions/core'
+import chalk from 'chalk'
 import {spawn, ChildProcess} from 'child_process'
+import * as os from 'os'
 import kill from 'tree-kill'
 import {v4 as uuidv4} from 'uuid'
-import * as core from '@actions/core'
-import {setCheckRunOutput, writeResultJSONFile} from './output'
-import * as os from 'os'
-import chalk from 'chalk'
 
-export type TestComparison = 'exact' | 'included' | 'regex'
-
-/**
- * 
- */
-export interface Test {
-  readonly name: string
-  readonly setup?: string
-  readonly run: string
-  readonly input?: string
-  readonly output?: string
-  readonly timeout: number
-  readonly points?: number
-  readonly comparison?: TestComparison
-}
-
-export class TestError extends Error {
-  constructor(message: string) {
-    super(message)
-    Error.captureStackTrace(this, TestError)
-  }
-}
-
-export class TestTimeoutError extends TestError {
-  constructor(message: string) {
-    super(message)
-    Error.captureStackTrace(this, TestTimeoutError)
-  }
-}
-
-export class TestOutputError extends TestError {
-  expected: string
-  actual: string
-
-  constructor(message: string, expected: string, actual: string) {
-    super(`${message}\nExpected:\n${expected}\nActual:\n${actual}`)
-    this.expected = expected
-    this.actual = actual
-
-    Error.captureStackTrace(this, TestOutputError)
-  }
-}
+import {Test, TestSuite, TestResult, Report,
+        TestError, TestOutputError, TestTimeoutError} from './Test'
+import {setCheckRunOutput, uploadArtifact} from './output'
 
 /**
  * UTILITY FUNCTIONS
@@ -56,7 +16,7 @@ export class TestOutputError extends TestError {
 const log = (text: string): void => {
   process.stdout.write(text + os.EOL)
 }
-/** Trims `text` and reduces \r\n to \.n */
+/** Trims `text` and reduces \r\n to \n */
 const normalizeLineEndings = (text: string): string => {
   return text.replace(/\r\n/gi, '\n').trim()
 }
@@ -165,22 +125,19 @@ const runCommand = async (test: Test, cwd: string, timeout: number): Promise<voi
 
   // Start with a single new line
   process.stdout.write(indent('\n'))
-
+  // Set event handlers for stdout and stderr
   child.stdout.on('data', chunk => {
     process.stdout.write(indent(chunk))
     output += chunk
   })
-
   child.stderr.on('data', chunk => {
     process.stderr.write(indent(chunk))
   })
-
-  // Preload the inputs
+  // Load the inputs into the process' stdin
   if (test.input && test.input !== '') {
     child.stdin.write(test.input)
     child.stdin.end()
   }
-
   await waitForExit(child, timeout)
 
   // If the test has no input or output, we know it isn't matching against
@@ -188,10 +145,9 @@ const runCommand = async (test: Test, cwd: string, timeout: number): Promise<voi
   if ((!test.output || test.output == '') && (!test.input || test.input == '')) {
     return
   }
-
+  // Normalize the expected and actual output
   const expected = normalizeLineEndings(test.output || '')
   const actual = normalizeLineEndings(output)
-
   switch (test.comparison) {
     case 'exact':
       if (actual != expected) {
@@ -231,11 +187,24 @@ export const run = async (test: Test, cwd: string): Promise<void> => {
   await runCommand(test, cwd, timeout)
 }
 
-export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autograding'): Promise<void> => {
-  let points: number = 0
-  let availablePoints: number = 0
+/**
+ * 
+ * 
+ * @param tests 
+ * @param cwd 
+ * @param testSuite 
+ */
+export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 'autograding'): Promise<void> => {
+  let report: Report = {
+    testSuite: testSuiteName,
+    points: 0,
+    availablePoints: 0,
+    testsPassed: 0,
+    testsFailed: 0,
+    log: []
+  }
   let hasPoints: boolean = false
-  let jsonScoreLog: Array<any> = []
+  let failed = false
 
   // https://help.github.com/en/actions/reference/development-tools-for-github-actions#stop-and-start-log-commands-stop-commands
   const token = uuidv4()
@@ -243,71 +212,73 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
   log(`::stop-commands::${token}`)
   log('')
 
-  let failed = false
-
+  // Setup step summary
+  const step_summary = core.getInput('step_summary') == 'true'
   var summaryTable:any[][] = [[{data: 'Test name', header: true},
                                {data: 'Points', header: true},
                                {data: 'Passed?', header: true}]]
+  // Get TestSuite elements
+  const tests: Array<Test> = testSuite.tests
+  const allOrNothing = testSuite.allOrNothing == true
 
-  /** Fetch YAML inputs from the workflow. */
-  const step_summary = core.getInput('step_summary') == 'true'
-  const allOrNothing = core.getInput("all_or_nothing", {required: false}) == 'true'
-
+  // Run each test in serial
   for (const test of tests) {
-    let scoreLog = {
+    let testResult: TestResult = {
       test: test.name,
       success: false,
       points: 0,
-      availablePoints: test.points,
+      availablePoints: 0
     }
-
-    let scoreString = '-'
-    let scoreStatus = '❌'
-
     try {
       if (test.points) {
         hasPoints = true
-        availablePoints += test.points
+        report.availablePoints += test.points
       }
+      // Delimit each case in stdout
       log(chalk.cyan(`📝 ${test.name}`))
       log('')
       await run(test, cwd)
-      log('')
-      log(chalk.green(`✅ ${test.name}`))
-      log(``)
+      /** TEST PASSED */
+      testResult.success = true
+      report.testsPassed++
       if (test.points) {
-        points += test.points
-        scoreLog.points = test.points
-      }
-      scoreLog.success = true
-      scoreStatus = '✅'
-      if (!allOrNothing) {
-        scoreString = points ? points.toString() : "-"
+        testResult.points = test.points
+        report.points += test.points
       }
     } catch (error: any) {
+      /** TEST FAILED */
       failed = true
-      log('')
-      log(chalk.red(`❌ ${test.name}`))
-      scoreStatus = '❌'
-      if (!allOrNothing) {
-        scoreString = '0'
-      }
+      report.testsFailed++
       core.setFailed(error.message)
     }
-
-    if (step_summary) {
-      summaryTable.push([test.name, scoreString, scoreStatus])
+    if (testResult.success) {
+      log('')
+      log(chalk.green(`✅ ${test.name}`))
+      log('')
+    } else {
+      log('')
+      log(chalk.red(`❌ ${test.name}`))
+      log('')
     }
 
-    jsonScoreLog.push(scoreLog)
-  }
+    /** If we are making a step summary, push a row to the table */
+    if (step_summary) {
+      summaryTable.push([
+        test.name,
+        allOrNothing ? testResult.points.toString() : '-',
+        testResult.success ? '✅' : '❌',
+      ])
+    }
 
+    report.log.push(testResult)
+  }
   // Restart command processing
   log('')
   log(`::${token}::`)
-
   if (failed) {
-    // We need a good failure experience
+    log('')
+    log(chalk.red(`${report.testsPassed}/${tests.length} test cases passed`))
+    log('')
   } else {
     log('')
     log(chalk.green('All tests passed'))
@@ -315,13 +286,11 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
     log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨')
     log('')
   }
-
   if (allOrNothing) {
-    points = points == availablePoints ? availablePoints : 0
+    report.points = failed ? 0 : report.points
   }
-
   if (step_summary) {
-    let pointsReport = `Total points: ${points}/${availablePoints}`
+    let pointsReport = `Total points: ${report.points}/${report.availablePoints}`
     if (allOrNothing) {
       if (failed) {
         pointsReport = `0% - Not all tests passed`
@@ -338,20 +307,10 @@ export const runAll = async (tests: Array<Test>, cwd: string, testSuite = 'autog
 
   // Set the number of points
   if (hasPoints) {
-    const text = `Points ${points}/${availablePoints}`
+    const text = `Points ${report.points}/${report.availablePoints}`
     log(chalk.bold.bgCyan.black(text))
-    core.setOutput('Points', `${points}/${availablePoints}`)
-
+    core.setOutput('Points', `${report.points}/${report.availablePoints}`)
     await setCheckRunOutput(text)
   }
-
-  await writeResultJSONFile(
-    {
-      points: hasPoints ? points : failed ? 0 : 1,
-      availablePoints: hasPoints ? availablePoints : 1,
-      testSuite: testSuite,
-      log: jsonScoreLog,
-    },
-    cwd,
-  )
+  await uploadArtifact('grading-results', report, cwd)
 }

@@ -19086,6 +19086,51 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 8838:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * This file contains interfaces/typedefs for
+ * tests and the test suite.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TestOutputError = exports.TestTimeoutError = exports.TestError = void 0;
+/**
+ * Custom error classes for tests, used to delineate between output and timeout
+ * errors.
+ */
+class TestError extends Error {
+    constructor(message) {
+        super(message);
+        Error.captureStackTrace(this, TestError);
+    }
+}
+exports.TestError = TestError;
+class TestTimeoutError extends TestError {
+    constructor(message) {
+        super(message);
+        Error.captureStackTrace(this, TestTimeoutError);
+    }
+}
+exports.TestTimeoutError = TestTimeoutError;
+class TestOutputError extends TestError {
+    expected;
+    actual;
+    constructor(message, expected, actual) {
+        // If the user fails, we should tell them what the expected output is
+        super(`${message}\nExpected:\n${expected}\nActual:\n${actual}`);
+        this.expected = expected;
+        this.actual = actual;
+        Error.captureStackTrace(this, TestOutputError);
+    }
+}
+exports.TestOutputError = TestOutputError;
+
+
+/***/ }),
+
 /***/ 1551:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -19146,7 +19191,7 @@ const run = async () => {
         }
         const data = fs_1.default.readFileSync(path_1.default.resolve(cwd, `.github/classroom/${testSuite}.json`));
         const json = JSON.parse(data.toString());
-        await (0, runner_1.runAll)(json.tests, cwd, testSuite);
+        await (0, runner_1.runAll)(json, cwd, testSuite);
     }
     catch (error) {
         // If there is any error we'll fail the action with the error message
@@ -19195,36 +19240,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setCheckRunOutput = exports.writeResultJSONFile = void 0;
+exports.setCheckRunOutput = exports.uploadArtifact = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const artifactClient = artifact.create();
-const artifactName = 'grading-results';
-const options = {
-    continueOnError: false,
-};
 /**
- * Uploads a JSON file containing information about the test suite run.
+ * Uploads a JSON file containing information about the test suite run
+ * as an artifact to GitHub.
  *
  * @param json Dict containing artifact data.
  * @param cwd Filepath to write JSON artifact to.
  */
-const writeResultJSONFile = async (json, cwd) => {
-    const filepath = path_1.default.join(cwd, json.testSuite + '.json');
-    fs_1.default.writeFileSync(filepath, JSON.stringify(json));
-    // Upload the json file as artifact
-    await artifactClient.uploadArtifact(artifactName, [filepath], cwd, options);
-};
-exports.writeResultJSONFile = writeResultJSONFile;
+async function uploadArtifact(artifactName, report, cwd) {
+    const filepath = path_1.default.join(cwd, report.testSuite + '.json');
+    fs_1.default.writeFileSync(filepath, JSON.stringify(report));
+    await artifactClient.uploadArtifact(artifactName, [filepath], cwd, { continueOnError: false });
+}
+exports.uploadArtifact = uploadArtifact;
 /**
  * Sends check run data to GitHub.
  *
  * @param text The text to be written in the check run
  */
-const setCheckRunOutput = async (text) => {
+async function setCheckRunOutput(text) {
     // If we have nothing to output, then bail
     if (text === '')
         return;
@@ -19293,7 +19334,7 @@ const setCheckRunOutput = async (text) => {
             ],
         },
     });
-};
+}
 exports.setCheckRunOutput = setCheckRunOutput;
 
 
@@ -19331,39 +19372,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.runAll = exports.run = exports.TestOutputError = exports.TestTimeoutError = exports.TestError = void 0;
+exports.runAll = exports.run = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const chalk_1 = __importDefault(__nccwpck_require__(8818));
 const child_process_1 = __nccwpck_require__(2081);
+const os = __importStar(__nccwpck_require__(2037));
 const tree_kill_1 = __importDefault(__nccwpck_require__(9335));
 const uuid_1 = __nccwpck_require__(5840);
-const core = __importStar(__nccwpck_require__(2186));
+const Test_1 = __nccwpck_require__(8838);
 const output_1 = __nccwpck_require__(5768);
-const os = __importStar(__nccwpck_require__(2037));
-const chalk_1 = __importDefault(__nccwpck_require__(8818));
-class TestError extends Error {
-    constructor(message) {
-        super(message);
-        Error.captureStackTrace(this, TestError);
-    }
-}
-exports.TestError = TestError;
-class TestTimeoutError extends TestError {
-    constructor(message) {
-        super(message);
-        Error.captureStackTrace(this, TestTimeoutError);
-    }
-}
-exports.TestTimeoutError = TestTimeoutError;
-class TestOutputError extends TestError {
-    expected;
-    actual;
-    constructor(message, expected, actual) {
-        super(`${message}\nExpected:\n${expected}\nActual:\n${actual}`);
-        this.expected = expected;
-        this.actual = actual;
-        Error.captureStackTrace(this, TestOutputError);
-    }
-}
-exports.TestOutputError = TestOutputError;
 /**
  * UTILITY FUNCTIONS
  */
@@ -19371,7 +19388,7 @@ exports.TestOutputError = TestOutputError;
 const log = (text) => {
     process.stdout.write(text + os.EOL);
 };
-/** Trims `text` and reduces \r\n to \.n */
+/** Trims `text` and reduces \r\n to \n */
 const normalizeLineEndings = (text) => {
     return text.replace(/\r\n/gi, '\n').trim();
 };
@@ -19396,7 +19413,7 @@ const waitForExit = async (child, timeout) => {
         const exitTimeout = setTimeout(() => {
             timedOut = true;
             (0, tree_kill_1.default)(child.pid);
-            reject(new TestTimeoutError(`Setup timed out in ${timeout} milliseconds`));
+            reject(new Test_1.TestTimeoutError(`Setup timed out in ${timeout} milliseconds`));
         }, timeout);
         child.once('exit', (code, signal) => {
             if (timedOut)
@@ -19406,7 +19423,7 @@ const waitForExit = async (child, timeout) => {
                 resolve(undefined);
             }
             else {
-                reject(new TestError(`Error: Exit with code: ${code} and signal: ${signal}`));
+                reject(new Test_1.TestError(`Error: Exit with code: ${code} and signal: ${signal}`));
             }
         });
         child.once('error', (error) => {
@@ -19473,6 +19490,7 @@ const runCommand = async (test, cwd, timeout) => {
     let output = '';
     // Start with a single new line
     process.stdout.write(indent('\n'));
+    // Set event handlers for stdout and stderr
     child.stdout.on('data', chunk => {
         process.stdout.write(indent(chunk));
         output += chunk;
@@ -19480,7 +19498,7 @@ const runCommand = async (test, cwd, timeout) => {
     child.stderr.on('data', chunk => {
         process.stderr.write(indent(chunk));
     });
-    // Preload the inputs
+    // Load the inputs into the process' stdin
     if (test.input && test.input !== '') {
         child.stdin.write(test.input);
         child.stdin.end();
@@ -19491,24 +19509,25 @@ const runCommand = async (test, cwd, timeout) => {
     if ((!test.output || test.output == '') && (!test.input || test.input == '')) {
         return;
     }
+    // Normalize the expected and actual output
     const expected = normalizeLineEndings(test.output || '');
     const actual = normalizeLineEndings(output);
     switch (test.comparison) {
         case 'exact':
             if (actual != expected) {
-                throw new TestOutputError(`The output for test ${test.name} did not match`, expected, actual);
+                throw new Test_1.TestOutputError(`The output for test ${test.name} did not match`, expected, actual);
             }
             break;
         case 'regex':
             // Note: do not use expected here
             if (!actual.match(new RegExp(test.output || ''))) {
-                throw new TestOutputError(`The output for test ${test.name} did not match`, test.output || '', actual);
+                throw new Test_1.TestOutputError(`The output for test ${test.name} did not match`, test.output || '', actual);
             }
             break;
         default:
             // The default comparison mode is 'included'
             if (!actual.includes(expected)) {
-                throw new TestOutputError(`The output for test ${test.name} did not match`, expected, actual);
+                throw new Test_1.TestOutputError(`The output for test ${test.name} did not match`, expected, actual);
             }
             break;
     }
@@ -19531,73 +19550,95 @@ const run = async (test, cwd) => {
     await runCommand(test, cwd, timeout);
 };
 exports.run = run;
-const runAll = async (tests, cwd, testSuite = 'autograding') => {
-    let points = 0;
-    let availablePoints = 0;
+/**
+ *
+ *
+ * @param tests
+ * @param cwd
+ * @param testSuite
+ */
+const runAll = async (testSuite, cwd, testSuiteName = 'autograding') => {
+    let report = {
+        testSuite: testSuiteName,
+        points: 0,
+        availablePoints: 0,
+        testsPassed: 0,
+        testsFailed: 0,
+        log: []
+    };
     let hasPoints = false;
-    let jsonScoreLog = [];
+    let failed = false;
     // https://help.github.com/en/actions/reference/development-tools-for-github-actions#stop-and-start-log-commands-stop-commands
     const token = (0, uuid_1.v4)();
     log('');
     log(`::stop-commands::${token}`);
     log('');
-    let failed = false;
+    // Setup step summary
+    const step_summary = core.getInput('step_summary') == 'true';
     var summaryTable = [[{ data: 'Test name', header: true },
             { data: 'Points', header: true },
             { data: 'Passed?', header: true }]];
-    /** Fetch YAML inputs from the workflow. */
-    const step_summary = core.getInput('step_summary') == 'true';
-    const allOrNothing = core.getInput("all_or_nothing", { required: false }) == 'true';
+    // Get TestSuite elements
+    const tests = testSuite.tests;
+    const allOrNothing = testSuite.allOrNothing == true;
+    // Run each test in serial
     for (const test of tests) {
-        let scoreLog = {
+        let testResult = {
             test: test.name,
             success: false,
             points: 0,
-            availablePoints: test.points,
+            availablePoints: 0
         };
-        let scoreString = '-';
-        let scoreStatus = '❌';
         try {
             if (test.points) {
                 hasPoints = true;
-                availablePoints += test.points;
+                report.availablePoints += test.points;
             }
+            // Delimit each case in stdout
             log(chalk_1.default.cyan(`📝 ${test.name}`));
             log('');
             await (0, exports.run)(test, cwd);
-            log('');
-            log(chalk_1.default.green(`✅ ${test.name}`));
-            log(``);
+            /** TEST PASSED */
+            testResult.success = true;
+            report.testsPassed++;
             if (test.points) {
-                points += test.points;
-                scoreLog.points = test.points;
-            }
-            scoreLog.success = true;
-            scoreStatus = '✅';
-            if (!allOrNothing) {
-                scoreString = points ? points.toString() : "-";
+                testResult.points = test.points;
+                report.points += test.points;
             }
         }
         catch (error) {
+            /** TEST FAILED */
             failed = true;
-            log('');
-            log(chalk_1.default.red(`❌ ${test.name}`));
-            scoreStatus = '❌';
-            if (!allOrNothing) {
-                scoreString = '0';
-            }
+            report.testsFailed++;
             core.setFailed(error.message);
         }
-        if (step_summary) {
-            summaryTable.push([test.name, scoreString, scoreStatus]);
+        if (testResult.success) {
+            log('');
+            log(chalk_1.default.green(`✅ ${test.name}`));
+            log('');
         }
-        jsonScoreLog.push(scoreLog);
+        else {
+            log('');
+            log(chalk_1.default.red(`❌ ${test.name}`));
+            log('');
+        }
+        /** If we are making a step summary, push a row to the table */
+        if (step_summary) {
+            summaryTable.push([
+                test.name,
+                allOrNothing ? testResult.points.toString() : '-',
+                testResult.success ? '✅' : '❌',
+            ]);
+        }
+        report.log.push(testResult);
     }
     // Restart command processing
     log('');
     log(`::${token}::`);
     if (failed) {
-        // We need a good failure experience
+        log('');
+        log(chalk_1.default.red(`${report.testsPassed}/${tests.length} test cases passed`));
+        log('');
     }
     else {
         log('');
@@ -19607,10 +19648,10 @@ const runAll = async (tests, cwd, testSuite = 'autograding') => {
         log('');
     }
     if (allOrNothing) {
-        points = points == availablePoints ? availablePoints : 0;
+        report.points = failed ? 0 : report.points;
     }
     if (step_summary) {
-        let pointsReport = `Total points: ${points}/${availablePoints}`;
+        let pointsReport = `Total points: ${report.points}/${report.availablePoints}`;
         if (allOrNothing) {
             if (failed) {
                 pointsReport = `0% - Not all tests passed`;
@@ -19627,17 +19668,12 @@ const runAll = async (tests, cwd, testSuite = 'autograding') => {
     }
     // Set the number of points
     if (hasPoints) {
-        const text = `Points ${points}/${availablePoints}`;
+        const text = `Points ${report.points}/${report.availablePoints}`;
         log(chalk_1.default.bold.bgCyan.black(text));
-        core.setOutput('Points', `${points}/${availablePoints}`);
+        core.setOutput('Points', `${report.points}/${report.availablePoints}`);
         await (0, output_1.setCheckRunOutput)(text);
     }
-    await (0, output_1.writeResultJSONFile)({
-        points: hasPoints ? points : failed ? 0 : 1,
-        availablePoints: hasPoints ? availablePoints : 1,
-        testSuite: testSuite,
-        log: jsonScoreLog,
-    }, cwd);
+    await (0, output_1.uploadArtifact)('grading-results', report, cwd);
 };
 exports.runAll = runAll;
 

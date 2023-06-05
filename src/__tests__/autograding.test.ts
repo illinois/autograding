@@ -35,7 +35,7 @@ describe('run tests', () => {
   // Do dummy mock implementations for all output.ts functions, we don't care
   // about these right now
   jest.spyOn(core, 'setOutput').mockImplementation(() => { return })
-  jest.spyOn(output, 'writeResultJSONFile').mockImplementation(async () => { return })
+  jest.spyOn(output, 'uploadArtifact').mockImplementation(async () => { return })
   beforeEach(() => {
     process.env['GITHUB_WORKSPACE'] = __dirname
   })

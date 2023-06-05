@@ -1,7 +1,8 @@
 import * as core from '@actions/core'
 import fs from 'fs'
 import path from 'path'
-import {Test, runAll} from './runner'
+import {runAll} from './runner'
+import {TestSuite} from './Test'
 
 /**
  * Main autograding function. Runs the entire test suite as specified in
@@ -16,22 +17,19 @@ const run = async (): Promise<void> => {
                      action on a supported platform.`)
       return
     }
-
     const assignmentPath = core.getInput('path')
     if (assignmentPath) {
       console.log(`Using assignment path: ${assignmentPath}`)
       cwd = path.join(cwd, assignmentPath)
     }
-
     let testSuite = core.getInput('test_suite')
     if (!testSuite) {
       testSuite = 'autograding'
     }
 
     const data = fs.readFileSync(path.resolve(cwd, `.github/classroom/${testSuite}.json`))
-    const json = JSON.parse(data.toString())
-
-    await runAll(json.tests as Array<Test>, cwd, testSuite)
+    const json = JSON.parse(data.toString()) as TestSuite
+    await runAll(json, cwd, testSuite)
   } catch (error: any) {
     // If there is any error we'll fail the action with the error message
     console.error(error.message)
