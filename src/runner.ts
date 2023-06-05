@@ -233,7 +233,7 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
     try {
       if (test.points) {
         hasPoints = true
-        testResult.points = test.points
+        testResult.availablePoints = test.points
         report.availablePoints += test.points
       }
       // Delimit each case in stdout
@@ -253,6 +253,7 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
       report.testsFailed++
       core.setFailed(error.message)
     }
+    // Log test outcome
     if (testResult.success) {
       log('')
       log(chalk.green(`✅ ${test.name}`))
@@ -294,6 +295,9 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
   // Write step summary to $GITHUB_STEP_SUMMARY
   if (step_summary) {
     let pointsReport: string = `Total points: ${report.points}/${report.availablePoints}`
+    if (!hasPoints) {
+      pointsReport = `${report.testsPassed}/${tests.length} test cases passed`
+    }
     if (allOrNothing) {
       if (failed) {
         pointsReport = `0% - Not all tests passed`
@@ -315,5 +319,6 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
     core.setOutput('Points', `${report.points}/${report.availablePoints}`)
     await setCheckRunOutput(text)
   }
+  core.setOutput('report', JSON.stringify(report))
   await uploadArtifact('grading-results', report, cwd)
 }

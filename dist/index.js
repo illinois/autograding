@@ -19593,7 +19593,7 @@ const runAll = async (testSuite, cwd, testSuiteName = 'autograding') => {
         try {
             if (test.points) {
                 hasPoints = true;
-                testResult.points = test.points;
+                testResult.availablePoints = test.points;
                 report.availablePoints += test.points;
             }
             // Delimit each case in stdout
@@ -19614,6 +19614,7 @@ const runAll = async (testSuite, cwd, testSuiteName = 'autograding') => {
             report.testsFailed++;
             core.setFailed(error.message);
         }
+        // Log test outcome
         if (testResult.success) {
             log('');
             log(chalk_1.default.green(`✅ ${test.name}`));
@@ -19656,6 +19657,9 @@ const runAll = async (testSuite, cwd, testSuiteName = 'autograding') => {
     // Write step summary to $GITHUB_STEP_SUMMARY
     if (step_summary) {
         let pointsReport = `Total points: ${report.points}/${report.availablePoints}`;
+        if (!hasPoints) {
+            pointsReport = `${report.testsPassed}/${tests.length} test cases passed`;
+        }
         if (allOrNothing) {
             if (failed) {
                 pointsReport = `0% - Not all tests passed`;
@@ -19677,6 +19681,7 @@ const runAll = async (testSuite, cwd, testSuiteName = 'autograding') => {
         core.setOutput('Points', `${report.points}/${report.availablePoints}`);
         await (0, output_1.setCheckRunOutput)(text);
     }
+    core.setOutput('report', JSON.stringify(report));
     await (0, output_1.uploadArtifact)('grading-results', report, cwd);
 };
 exports.runAll = runAll;

@@ -55,19 +55,35 @@ export interface TestSuite {
   readonly allOrNothing?: boolean
 }
 
+/**
+ * Typedef recording a single test result.
+ */
 export interface TestResult {
+  /** Test name */
   test: string
+  /** Number of points earned */
   points: number
+  /** Number of possible points to earn */
   availablePoints: number
+  /** True if test succeeded, false otherwise */
   success: boolean
 }
 
+/**
+ * Typedef containing the test report, effectively just an array of TestResults
+ * with some additional information on top. Sent to GitHub as an artifact
+ * and used in the `report` output variable.
+ */
 export interface Report {
+  /** Name of the test suite */
   testSuite: string
+  /** Number of total points earned */
   points: number
+  /** Number of points available through the whole test suite */
   availablePoints: number
   testsPassed: number
   testsFailed: number
+  /** TestResult for each test run in the suite */
   log: Array<TestResult>
 }
 
