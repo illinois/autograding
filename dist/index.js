@@ -19629,7 +19629,7 @@ const runAll = async (testSuite, cwd, testSuiteName = 'autograding') => {
         if (step_summary) {
             summaryTable.push([
                 test.name,
-                allOrNothing ? '-' : testResult.points.toString(),
+                allOrNothing ? '-' : testResult.availablePoints.toString(),
                 testResult.success ? '✅' : '❌',
             ]);
         }

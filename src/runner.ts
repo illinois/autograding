@@ -268,7 +268,7 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
     if (step_summary) {
       summaryTable.push([
         test.name,
-        allOrNothing ? '-' : testResult.points.toString(),
+        allOrNothing ? '-' : testResult.availablePoints.toString(),
         testResult.success ? '✅' : '❌',
       ])
     }
