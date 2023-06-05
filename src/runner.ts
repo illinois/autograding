@@ -188,10 +188,11 @@ export const run = async (test: Test, cwd: string): Promise<void> => {
 }
 
 /**
+ * Runs each test in testSuite in serial, logging results to $GITHUB_STEP_SUMMARY
+ * if necessary and uploading a checkRun to GitHub.
  * 
- * 
- * @param tests 
- * @param cwd 
+ * @param testSuite
+ * @param cwd Current working directory
  * @param testSuite 
  */
 export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 'autograding'): Promise<void> => {
@@ -286,9 +287,11 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
     log('✨🌟💖💎🦄💎💖🌟✨🌟💖💎🦄💎💖🌟✨')
     log('')
   }
+  // Reset points to 0 if a test has been failed with AoN
   if (allOrNothing) {
     report.points = failed ? 0 : report.points
   }
+  // Write step summary to $GITHUB_STEP_SUMMARY
   if (step_summary) {
     let pointsReport: string = `Total points: ${report.points}/${report.availablePoints}`
     if (allOrNothing) {

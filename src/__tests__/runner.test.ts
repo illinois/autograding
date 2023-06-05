@@ -123,7 +123,7 @@ describe(`Full test suites -- running ${LANGUAGE}`, () => {
 })
 
 /**
- * Individual tests, checking
+ * Individual tests
  */
 describe('Individual custom tests', () => {
   const cwd = path.resolve(__dirname, 'sh')
