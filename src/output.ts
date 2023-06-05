@@ -3,29 +3,21 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import fs from 'fs'
 import path from 'path'
+import {Report} from './Test'
 
 const artifactClient = artifact.create()
-const artifactName = 'grading-results'
-const options = {
-  continueOnError: false,
-}
-
 
 /**
- * Uploads a JSON file containing information about the test suite run.
+ * Uploads a JSON file containing information about the test suite run
+ * as an artifact to GitHub.
  * 
  * @param json Dict containing artifact data.
  * @param cwd Filepath to write JSON artifact to. 
  */
-export const writeResultJSONFile = async (
-  json: {points: number; availablePoints: number; testSuite: string; log: any},
-  cwd: string,
-): Promise<void> => {
-  const filepath = path.join(cwd, json.testSuite + '.json')
-  fs.writeFileSync(filepath, JSON.stringify(json))
-
-  // Upload the json file as artifact
-  await artifactClient.uploadArtifact(artifactName, [filepath], cwd, options)
+export async function uploadArtifact (artifactName: string, report: Report, cwd: string): Promise<void> {
+  const filepath = path.join(cwd, report.testSuite + '.json')
+  fs.writeFileSync(filepath, JSON.stringify(report))
+  await artifactClient.uploadArtifact(artifactName, [filepath], cwd, {continueOnError: false})
 }
 
 /**
@@ -33,7 +25,7 @@ export const writeResultJSONFile = async (
  * 
  * @param text The text to be written in the check run
  */
-export const setCheckRunOutput = async (text: string): Promise<void> => {
+export async function setCheckRunOutput (text: string): Promise<void> {
   // If we have nothing to output, then bail
   if (text === '') return
 

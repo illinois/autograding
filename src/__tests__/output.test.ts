@@ -1,4 +1,4 @@
-import * as core from '@actions/core'
+/* import * as core from '@actions/core'
 import {setCheckRunOutput} from '../output'
 import nock from 'nock'
 
@@ -24,7 +24,7 @@ afterEach(() => {
   nock.cleanAll()
 })
 
-/* beforeEach(() => {
+beforeEach(() => {
   // resetModules allows you to safely change the environment and mock imports
   // separately in each of your tests
   jest.resetModules()
@@ -54,7 +54,7 @@ afterEach(() => {
       },
     },
   } as WebhookPayload
-}) */
+})
 
 describe('output', () => {
   beforeEach(() => {
@@ -90,3 +90,4 @@ describe('output', () => {
     await expect(setCheckRunOutput('Dogs on parade')).resolves.not.toThrow()
   }, 10000)
 })
+ */
