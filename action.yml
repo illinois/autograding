@@ -22,5 +22,5 @@ inputs:
     description: Boolean describing if points are awared if and only if all points have been earned.
     default: false
 runs:
-  using: "node16"
+  using: "node20"
   main: "./dist/index.js"
