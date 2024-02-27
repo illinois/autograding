@@ -33,13 +33,13 @@ autograding:
   steps:
   - name: Checkout student repository
     id: sr-checkout
-    uses: actions/checkout@v3
+    uses: actions/checkout@v4
   - name: Checkout release repository
     id: release-checkout
-    uses: actions/checkout@v3
+    uses: actions/checkout@v4
   - name: Copy reference files
     id: local-copy
-    uses: illinois/local-copy@v1
+    uses: illinois/local-copy@v2
     with:
       src_path: release
       dst_path: .
@@ -55,7 +55,7 @@ autograding:
       reference_files: 'mp1/tests/test-file.cpp : reference/tests/test-file.cpp, mp1/Makefile : reference/Makefile'
   - name: Autograding
     id: autograding
-    uses: illinois/autograding@v3
+    uses: illinois/autograding@v5
     with:
       path: mp1/
       test_suite: autograding
