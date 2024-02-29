@@ -1,0 +1,26 @@
+{
+    "allOrNothing": true,
+    "tests": [
+        {
+            "name": "Add zeroes",
+            "setup": "",
+            "run": "python -m pytest test_add.py -k test_add_zeros",
+            "timeout": 0.5,
+            "points": 1
+        },
+        {
+            "name": "One plus zero",
+            "setup": "",
+            "run": "python -m pytest test_add.py -k test_one_plus_zero",
+            "timeout": 0.5,
+            "points": 1
+        },
+        {
+            "name" : "Two plus two",
+            "setup" : "",
+            "run": "python -m pytest test_add.py -k test_two_plus_two",
+            "timeout": 0.5,
+            "points": 2
+        }
+    ]
+}
