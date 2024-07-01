@@ -5,7 +5,7 @@ import fs from 'fs'
 import path from 'path'
 import {Report} from './Test'
 
-const artifactClient = artifact.create()
+const artifactClient = artifact.default;
 
 /**
  * Uploads a JSON file containing information about the test suite run
@@ -17,7 +17,7 @@ const artifactClient = artifact.create()
 export async function uploadArtifact (artifactName: string, report: Report, cwd: string): Promise<void> {
   const filepath = path.join(cwd, report.testSuite + '.json')
   fs.writeFileSync(filepath, JSON.stringify(report))
-  await artifactClient.uploadArtifact(artifactName, [filepath], cwd, {continueOnError: false})
+  await artifactClient.uploadArtifact(artifactName, [filepath], cwd);
 }
 
 /**

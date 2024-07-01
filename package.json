@@ -1,6 +1,6 @@
 {
   "name": "autograding",
-  "version": "4.0.0",
+  "version": "6.0.0",
   "description": "A set of actions for autograding assignments with GitHub Classroom",
   "main": "dist/index.js",
   "scripts": {
@@ -16,10 +16,9 @@
   "author": "University of Illinois",
   "license": "ISC",
   "dependencies": {
-    "@actions/artifact": "^1.1.1",
-    "@actions/core": "^1.10.0",
-    "@actions/github": "^5.1.1",
-    "@types/mocha": "^10.0.1",
+    "@actions/artifact": "^2.1.7",
+    "@actions/core": "^1.10.1",
+    "@types/mocha": "^10.0.7",
     "@vercel/ncc": "^0.36.1",
     "tree-kill": "^1.2.2",
     "uuid": "^9.0.0"
@@ -31,6 +30,6 @@
     "@types/uuid": "^9.0.1",
     "nock": "^13.3.1",
     "ts-jest": "^29.1.0",
-    "typescript": "^5.1.3"
+    "typescript": "^5.5.2"
   }
 }
