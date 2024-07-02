@@ -1,4 +1,5 @@
 # Ignore test runner output
+__pycache__/
 __tests__/runner/*
 
 # Ignore test execution output

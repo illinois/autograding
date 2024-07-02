@@ -17,6 +17,7 @@ process.stderr.write = (str, encoding, cb) => {
 
 module.exports = {
   clearMocks: true,
+  preset: 'ts-jest',
   moduleFileExtensions: ['js', 'ts'],
   testEnvironment: 'node',
   testMatch: ['**/*.test.ts'],

@@ -1,12 +1,11 @@
 {
   "name": "autograding",
-  "version": "2.0.0",
+  "version": "6.0.0",
   "description": "A set of actions for autograding assignments with GitHub Classroom",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc --noEmit && ncc build src/autograding.ts -o dist",
-    "test": "tsc --noEmit && jest",
-    "lint": "eslint . --ext .ts"
+    "test": "tsc --noEmit && jest runner.test.ts --verbose false"
   },
   "keywords": [
     "github",
@@ -14,32 +13,23 @@
     "classroom",
     "autograding"
   ],
-  "author": "GitHub",
+  "author": "University of Illinois",
   "license": "ISC",
   "dependencies": {
-    "@actions/artifact": "^0.6.1",
-    "@actions/core": "^1.10.0",
-    "@actions/github": "^2.1.1",
-    "@types/mocha": "^9.1.1",
-    "@vercel/ncc": "^0.34.0",
+    "@actions/artifact": "^2.1.7",
+    "@actions/core": "^1.10.1",
+    "@types/mocha": "^10.0.7",
+    "@vercel/ncc": "^0.36.1",
     "tree-kill": "^1.2.2",
-    "uuid": "^7.0.1"
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^25.2.3",
+    "@types/jest": "^29.5.2",
     "@types/nock": "^11.1.0",
-    "@types/node": "^13.13.52",
-    "@types/uuid": "^7.0.0",
-    "@typescript-eslint/eslint-plugin": "^2.18.0",
-    "@typescript-eslint/parser": "^2.18.0",
-    "@zeit/ncc": "^0.21.0",
-    "eslint": "^6.8.0",
-    "eslint-config-prettier": "^6.10.0",
-    "eslint-plugin-prettier": "^3.1.2",
-    "jest": "^25.1.0",
-    "nock": "^11.7.2",
-    "prettier": "^1.19.1",
-    "ts-jest": "^25.1.0",
-    "typescript": "^3.9.10"
+    "@types/node": "^20.2.5",
+    "@types/uuid": "^9.0.1",
+    "nock": "^13.3.1",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.5.2"
   }
 }

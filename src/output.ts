@@ -3,25 +3,29 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import fs from 'fs'
 import path from 'path'
+import {Report} from './Test'
 
-const artifactClient = artifact.create()
-const artifactName = 'grading-results'
-const options = {
-  continueOnError: false,
+const artifactClient = artifact.default;
+
+/**
+ * Uploads a JSON file containing information about the test suite run
+ * as an artifact to GitHub.
+ * 
+ * @param json Dict containing artifact data.
+ * @param cwd Filepath to write JSON artifact to. 
+ */
+export async function uploadArtifact (artifactName: string, report: Report, cwd: string): Promise<void> {
+  const filepath = path.join(cwd, report.testSuite + '.json')
+  fs.writeFileSync(filepath, JSON.stringify(report))
+  await artifactClient.uploadArtifact(artifactName, [filepath], cwd);
 }
 
-export const writeResultJSONFile = async (
-  json: {points: number; availablePoints: number; testSuite: string; log: any},
-  cwd: string,
-): Promise<void> => {
-  const filepath = path.join(cwd, json.testSuite + '.json')
-  fs.writeFileSync(filepath, JSON.stringify(json))
-
-  // Upload the json file as artifact
-  await artifactClient.uploadArtifact(artifactName, [filepath], cwd, options)
-}
-
-export const setCheckRunOutput = async (text: string): Promise<void> => {
+/**
+ * Sends check run data to GitHub.
+ * 
+ * @param text The text to be written in the check run
+ */
+export async function setCheckRunOutput (text: string): Promise<void> {
   // If we have nothing to output, then bail
   if (text === '') return
 
@@ -31,7 +35,7 @@ export const setCheckRunOutput = async (text: string): Promise<void> => {
   if (!token || token === '') return
 
   // Create the octokit client
-  const octokit: github.GitHub = new github.GitHub(token)
+  const octokit = github.getOctokit(token)
   if (!octokit) return
 
   // The environment contains a variable for current repository. The repository
@@ -47,7 +51,7 @@ export const setCheckRunOutput = async (text: string): Promise<void> => {
   if (Number.isNaN(runId)) return
 
   // Fetch the workflow run
-  const workflowRunResponse = await octokit.actions.getWorkflowRun({
+  const workflowRunResponse = await octokit.rest.actions.getWorkflowRun({
     owner,
     repo,
     run_id: runId,
@@ -57,7 +61,7 @@ export const setCheckRunOutput = async (text: string): Promise<void> => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const checkSuiteUrl = (workflowRunResponse.data as any).check_suite_url
   const checkSuiteId = parseInt(checkSuiteUrl.match(/[0-9]+$/)[0], 10)
-  const checkRunsResponse = await octokit.checks.listForSuite({
+  const checkRunsResponse = await octokit.rest.checks.listForSuite({
     owner,
     repo,
     check_name: 'Autograding',
@@ -69,7 +73,7 @@ export const setCheckRunOutput = async (text: string): Promise<void> => {
   // Update the checkrun, we'll assign the title, summary and text even though we expect
   // the title and summary to be overwritten by GitHub Actions (they are required in this call)
   // We'll also store the total in an annotation to future-proof
-  await octokit.checks.update({
+  await octokit.rest.checks.update({
     owner,
     repo,
     check_run_id: checkRun.id,
