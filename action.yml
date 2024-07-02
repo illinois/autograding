@@ -18,9 +18,6 @@ inputs:
   step_summary: 
     description: Boolean describing if a step summary should be generated
     default: false
-  all_or_nothing: 
-    description: Boolean describing if grade should be calculated using percentages of passed tests or all-or-nothing
-    default: false
 runs:
   using: "node20"
   main: "./dist/index.js"
