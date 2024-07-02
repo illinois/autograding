@@ -85430,7 +85430,7 @@ const run = async () => {
     }
     catch (error) {
         // If there is any error we'll fail the action with the error message
-        console.error(error.message);
+        console.error(error);
         core.setFailed(`Autograding failure: ${error}`);
     }
 };

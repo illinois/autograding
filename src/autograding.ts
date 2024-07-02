@@ -32,7 +32,7 @@ const run = async (): Promise<void> => {
     await runAll(json, cwd, testSuite)
   } catch (error: any) {
     // If there is any error we'll fail the action with the error message
-    console.error(error.message)
+    console.error(error)
     core.setFailed(`Autograding failure: ${error}`)
   }
 }
