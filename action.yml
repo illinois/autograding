@@ -1,6 +1,6 @@
 name: Autograding
-description: "Autograding for GitHub Classroom"
-author: "@github"
+description: "GitHub Action-based Autograding"
+author: "@illinois"
 inputs:
   token:
     description: >
@@ -17,6 +17,9 @@ inputs:
     default: 'autograding'
   step_summary: 
     description: Boolean describing if a step summary should be generated
+    default: false
+  all_or_nothing: 
+    description: Boolean describing if grade should be calculated using percentages of passed tests or all-or-nothing
     default: false
 runs:
   using: "node20"
