@@ -4,6 +4,7 @@ import {spawn, ChildProcess} from 'child_process'
 import * as os from 'os'
 import kill from 'tree-kill'
 import {v4 as uuidv4} from 'uuid'
+import Convert from 'ansi-to-html'
 
 import {Test, TestSuite, TestResult, Report,
         TestError, TestOutputError, TestTimeoutError} from './Test'
@@ -111,7 +112,15 @@ const runSetup = async (test: Test, cwd: string, timeout: number): Promise<void>
  * @returns 
  */
 const runCommand = async (test: Test, cwd: string, timeout: number): Promise<void> => {
-  const child = spawn(test.run, {
+  let testCommand = test.run
+  if (test.run.includes('pytest') && !test.run.includes('--tb')) {
+    // Add the --tb=native flag to pytest to get full tracebacks while not
+    // printing the full traceback
+    // https://docs.pytest.org/en/stable/how-to/output.html#modifying-python-traceback-printing
+    testCommand = test.run + ' --tb=native'
+  }
+
+  const child = spawn(testCommand, {
     cwd,
     shell: true,
     timeout: timeout + 1000,
@@ -127,7 +136,7 @@ const runCommand = async (test: Test, cwd: string, timeout: number): Promise<voi
   process.stdout.write(indent('\n'))
   // Set event handlers for stdout and stderr
   child.stdout.on('data', chunk => {
-    process.stdout.write(indent(chunk))
+    // process.stdout.write(indent(chunk))
     output += chunk
   })
   child.stderr.on('data', chunk => {
@@ -138,7 +147,35 @@ const runCommand = async (test: Test, cwd: string, timeout: number): Promise<voi
     child.stdin.write(test.input)
     child.stdin.end()
   }
-  await waitForExit(child, timeout)
+
+  try {
+    await waitForExit(child, timeout)
+  } catch (e) {
+    if (e instanceof TestError) {
+      e.payload = output
+
+      const lines = normalizeLineEndings(output).split('\n')
+      let shortOutput = lines.find(line => line.includes('AssertionError'))?.trim()
+      if (!shortOutput) {
+        const tracebackStart = lines.findIndex(line => 
+          line.includes('Traceback (most recent call last)'))
+        let tracebackEnd = lines.findIndex(line => 
+          line.includes('The above exception was the direct cause of the following exception:'))
+        if (tracebackEnd > tracebackStart) {
+          shortOutput = lines.slice(tracebackStart, tracebackEnd).join('\n')
+        }
+      }
+      
+      if (shortOutput) {
+        shortOutput = `\n\n${chalk.red('❌ Test failure summary: ')}\n${indent(shortOutput)}\n`
+      }
+
+      process.stdout.write(shortOutput || output)
+    } else {
+      process.stdout.write(output)
+    }
+    throw e
+  }
 
   // If the test has no input or output, we know it isn't matching against
   // any user-provided input, so exit early
@@ -206,6 +243,7 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
   }
   let hasPoints: boolean = false
   let failed = false
+  let skipped = false
 
   // https://help.github.com/en/actions/reference/development-tools-for-github-actions#stop-and-start-log-commands-stop-commands
   const token = uuidv4()
@@ -218,6 +256,7 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
   var summaryTable:any[][] = [[{data: 'Test name', header: true},
                                {data: 'Points', header: true},
                                {data: 'Passed?', header: true}]]
+  let failedSummaries = [] as string[]
   // Get TestSuite elements
   const tests: Array<Test> = testSuite.tests
   const allOrNothing = testSuite.allOrNothing == true
@@ -230,28 +269,40 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
       points: 0,
       availablePoints: 0
     }
-    try {
-      if (test.points) {
-        hasPoints = true
-        testResult.availablePoints = test.points
-        report.availablePoints += test.points
+    let currentFailedSummaries = [] as string[]
+
+    // Skip test if allOrNothing is true and a test has already failed
+    if (allOrNothing && failed) {
+      log(chalk.yellow(`🚫 Skipping ${test.name} due to previous failure`))
+      skipped = true
+    } else {
+      try {
+        if (test.points) {
+          hasPoints = true
+          testResult.availablePoints = test.points
+          report.availablePoints += test.points
+        }
+        // Delimit each case in stdout
+        log(chalk.cyan(`📝 ${test.name}`))
+        log('')
+        await run(test, cwd)
+        /** TEST PASSED */
+        testResult.success = true
+        report.testsPassed++
+        if (test.points) {
+          testResult.points = test.points
+          report.points += test.points
+        }
+      } catch (error: any) {
+        /** TEST FAILED */
+        if ('payload' in error && typeof error.payload === 'string') {
+          currentFailedSummaries = generateFailedSummaries(error.payload)
+          failedSummaries.push(...currentFailedSummaries)
+        }
+        failed = true
+        report.testsFailed++
+        core.setFailed(error.message)
       }
-      // Delimit each case in stdout
-      log(chalk.cyan(`📝 ${test.name}`))
-      log('')
-      await run(test, cwd)
-      /** TEST PASSED */
-      testResult.success = true
-      report.testsPassed++
-      if (test.points) {
-        testResult.points = test.points
-        report.points += test.points
-      }
-    } catch (error: any) {
-      /** TEST FAILED */
-      failed = true
-      report.testsFailed++
-      core.setFailed(error.message)
     }
     // Log test outcome
     if (testResult.success) {
@@ -266,10 +317,23 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
 
     /** If we are making a step summary, push a row to the table */
     if (step_summary) {
+      let summary = test.name;
+      if (!testResult.success) {
+        if (skipped) {
+          summary += '- Skipped'
+        } else if (currentFailedSummaries.length > 0) {
+          summary += '- ' + currentFailedSummaries
+            .map(err => err.split(' - ')[1])
+            .join(' ')
+        } else {
+          summary += ' - Failed'
+        }
+      }
+
       summaryTable.push([
-        test.name,
+        summary,
         allOrNothing ? '-' : testResult.availablePoints.toString(),
-        testResult.success ? '✅' : '❌',
+        skipped ? '-' : testResult.success ? '✅' : '❌',
       ])
     }
     report.log.push(testResult)
@@ -305,11 +369,27 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
         pointsReport = `100% - All tests passed! 🎉`
       }
     }
+
+    let headingLevel = 1
+
+    if (testSuite.microProject && !failed) {
+      core.summary.addHeading(
+        `You earned the ${testSuite.microProject.title} card! :tada:`,
+        headingLevel++
+      )
+      core.summary.addLink(
+        `<img src="${testSuite.microProject.image}" alt="${testSuite.microProject.title}" width="200px" />`,
+        testSuite.microProject.link
+      )
+      core.summary.addSeparator()
+    }
+
     core.summary
-    .addHeading('Grading summary :microscope:')
-    .addTable(summaryTable)
-    .addRaw(pointsReport)
-    .write()
+      .addHeading('Grading summary :microscope:', headingLevel)
+      .addTable(summaryTable)
+      .addRaw(pointsReport)
+
+    core.summary.write()
   }
 
   // Set the number of points
@@ -321,4 +401,20 @@ export const runAll = async (testSuite: TestSuite, cwd: string, testSuiteName = 
   }
   core.setOutput('report', JSON.stringify(report))
   await uploadArtifact('grading-results', report, cwd)
+}
+
+function generateFailedSummaries(raw: string): string[] {
+  const lines = normalizeLineEndings(raw).split('\n')
+  const failedSummaries = [] as string[]
+  let summariesBegin = false
+  const convert = new Convert()
+  for (const line of lines) {
+    if (summariesBegin && line.includes('FAILED')) {
+      failedSummaries.push(convert.toHtml(line))
+    } else if (line.includes('short test summary info')) {
+      summariesBegin = true
+      continue
+    }
+  }
+  return failedSummaries
 }

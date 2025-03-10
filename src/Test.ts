@@ -53,6 +53,11 @@ export interface TestSuite {
    * If true, points will be set to 0 if a single test is failed.
    */
   readonly allOrNothing?: boolean
+  readonly microProject?: {
+    readonly title: string
+    readonly image: string
+    readonly link: string
+  }
 }
 
 /**
@@ -92,6 +97,7 @@ export interface Report {
  * errors.
  */
 export class TestError extends Error {
+  public payload: any
   constructor(message: string) {
     super(message)
     Error.captureStackTrace(this, TestError)
